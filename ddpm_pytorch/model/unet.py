@@ -10,12 +10,13 @@ from ddpm_pytorch.variance_scheduler.abs_scheduler import Scheduler
 
 def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
     """
-    :param t:
-    :type t: int
-    :param dim:
-    :type dim: int
-    :return:
-    :rtype:
+
+    Args:
+        t (int): time step
+        dim (): embedding size
+
+    Returns: the transformer sinusoidal positional embedding vector
+
     """
     two_i = 2 * torch.arange(0, dim).unsqueeze(1)
     return torch.sin(t / torch.pow(10_000, two_i / dim))
