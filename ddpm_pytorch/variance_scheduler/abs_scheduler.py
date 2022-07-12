@@ -1,0 +1,16 @@
+from abc import abstractmethod, ABC
+
+
+class Scheduler(ABC):
+
+    @abstractmethod
+    def get_alpha_hat(self):
+        pass
+
+    @abstractmethod
+    def get_alpha_noise(self):
+        pass
+
+    @abstractmethod
+    def get_variance(self):
+        pass
