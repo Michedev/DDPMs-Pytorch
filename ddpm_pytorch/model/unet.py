@@ -5,7 +5,7 @@ import torch
 import pytorch_lightning as pl
 from torch import nn
 
-from ddpm_pytorch.variance_scheduler.abs_scheduler import Scheduler
+from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
 
 def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
@@ -13,7 +13,7 @@ def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
 
     Args:
         t (int): time step
-        dim (): embedding size
+        dim (int): embedding size
 
     Returns: the transformer sinusoidal positional embedding vector
 
