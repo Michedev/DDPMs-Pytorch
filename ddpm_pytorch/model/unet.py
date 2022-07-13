@@ -154,7 +154,6 @@ class DDPMUNet(pl.LightningModule):
         :param t: the time step
         :return: the pixel wise variational loss, with shape [batch_size, channels, width, height]
         """
-        b, c, w, h = x_t.shape
         if t == 0:
             p = torch.distributions.Normal(self.mu_x_t(x_t, t, model_noise), self.sigma_x_t(v, t))
             return - p.log_prob(x_0)
