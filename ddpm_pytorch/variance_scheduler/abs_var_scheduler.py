@@ -12,5 +12,9 @@ class Scheduler(ABC):
         pass
 
     @abstractmethod
-    def get_variance(self):
+    def get_betas(self):
+        pass
+
+    @abstractmethod
+    def get_betas_hat(self):
         pass

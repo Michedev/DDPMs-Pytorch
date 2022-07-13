@@ -1,6 +1,6 @@
-from math import sqrt
+from math import sqrt, log
 from random import randint
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import torch
 import pytorch_lightning as pl
 from torch import nn
@@ -50,6 +50,25 @@ class ResBlock(nn.Module):
         h = h + time_embed
         return self.out_layer(h) + x
 
+class ImageSelfAttention(nn.Module):
+
+    def __init__(self, num_channels: int, num_heads: int = 1):
+        super().__init__()
+        self.channels = num_channels
+        self.heads = num_heads
+
+        self.attn_layer = nn.MultiheadAttention(num_channels, num_heads=num_heads)
+
+    def forward(self, x):
+        """
+
+        :param x: tensor with shape [batch_size, channels, width, height]
+        :return: the attention output applied to the image with the shape [batch_size, channels, width, height]
+        """
+        b, c, w, h = x.shape
+        x = x.reshape(b, w * h, c)
+        attn_output = self.attn_layer(x, x, x)
+        return attn_output.reshape(b, c, w, h)
 
 class DDPMUNet(pl.LightningModule):
 
@@ -79,21 +98,24 @@ class DDPMUNet(pl.LightningModule):
         self.downsample_op = nn.MaxPool2d(kernel_size=2)
         self.middle_block = ResBlock(channels[-1], channels[-1], kernel_sizes[-1], strides[-1],
                                      paddings[-1], time_embed_size, p_dropouts[-1])
+        channels[0] += 1 # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
             ResBlock(2 * channels[-i - 1], channels[-i], kernel_sizes[-i - 1], strides[-i - 1],
                      paddings[-i - 1], time_embed_size, p_dropouts[-i - 1]) for i in range(len(channels) - 1)
         ])
+        self.self_attn = ImageSelfAttention(channels[2])
         self.upsample_op = nn.UpsamplingNearest2d(size=2)
         self.var_scheduler = variance_scheduler
         self.lambda_variational = lambda_variational
         self.alphas_hat: torch.FloatTensor = self.var_scheduler.get_alpha_hat()
         self.alphas: torch.FloatTensor = self.var_scheduler.get_alpha_noise()
-        self.variance = self.var_scheduler.get_variance()
+        self.betas = self.var_scheduler.get_betas()
+        self.betas_hat = self.var_scheduler.get_betas_hat()
         self.mse = nn.MSELoss()
         self.width = width
         self.height = height
 
-    def forward(self, x: torch.FloatTensor, t: int) -> Dict:
+    def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
         time_embedding = positional_embedding_vector(t, self.time_embed_size)
         hs = []
         h = x
@@ -101,14 +123,17 @@ class DDPMUNet(pl.LightningModule):
             h = downsample_block(h, time_embedding)
             if self.use_downsample and i != (len(self.downsample_blocks) - 1):
                 h = self.downsample_op(h)
-                hs.append(h)
+            if i == 2:
+                h = self.self_attn(h)
+            hs.append(h)
         for i, upsample_block in enumerate(self.upsample_blocks):
             if i != 0:
                 h = torch.cat([h, hs[-i]], dim=1)
             h = upsample_block(h, time_embedding)
             if self.use_downsample and i != 0:
                 h = self.upsample_op(h)
-        return h
+        x_recon, v = h[:, :3], h[:, 3:]
+        return x_recon, v
 
     def training_step(self, batch, batch_idx):
         t: int = randint(0, self.T - 1)
@@ -116,8 +141,43 @@ class DDPMUNet(pl.LightningModule):
         eps = torch.randn_like(batch)
         x_t = sqrt(alpha_hat) * batch + sqrt(1 - alpha_hat) * eps
         pred_eps = self(x_t, t)
-        loss = self.mse(eps, pred_eps)
+        loss = self.mse(eps, pred_eps)  #todo add variational lower bound
         return dict(loss=loss)
+
+    def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor, model_noise: torch.Tensor, v: torch.Tensor, t: int):
+        """
+        Compute variational loss for time step t
+        :param x_t: the image at step t obtained with closed form formula from x_0
+        :param x_0: the input image
+        :param model_noise: the unet predicted noise
+        :param v: the unet predicted coefficients for the variance
+        :param t: the time step
+        :return: the pixel wise variational loss, with shape [batch_size, channels, width, height]
+        """
+        b, c, w, h = x_t.shape
+        if t == 0:
+            p = torch.distributions.Normal(self.mu_x_t(x_t, t, model_noise), self.sigma_x_t(v, t))
+            return - p.log_prob(x_0)
+        elif t == (self.T-1):
+            p = torch.distributions.Normal(0, 1)
+            q = torch.distributions.Normal(sqrt(self.alphas_hat[t]) * x_0, (1 - self.alphas_hat[t]))
+            return torch.kl_div(q, p)
+        q = torch.distributions.Normal(self.mu_hat_xt_x0(x_t, x_0, t), self.sigma_hat(w * h, t, x_t.device))
+        p = torch.distributions.Normal(self.mu_x_t(x_t, t, model_noise), self.sigma_x_t(v, t))
+        return torch.distributions.kl_divergence(q, p)
+
+    def mu_x_t(self, x_t: torch.Tensor, t: int, model_noise: torch.Tensor) -> torch.Tensor:
+        return 1 / sqrt(self.alphas[t]) * (x_t - self.betas[t] / sqrt(1 - self.alphas_hat[t]) * model_noise)
+
+    def sigma_x_t(self, v: torch.Tensor, t: int) -> torch.Tensor:
+        return torch.exp(v * log(self.betas[t]) + (1 - v) * log(self.betas_hat[t]))
+
+    def mu_hat_xt_x0(self, x_t: torch.Tensor, x_0: torch.Tensor, t: int):
+        return sqrt(self.alphas_hat[t-1]) * self.betas[t] / (1 - self.alphas_hat[t]) * x_0 +\
+               sqrt(self.alphas[t]) * (1 - self.alphas_hat[t-1]) / (1 - self.alphas_hat[t]) * x_t
+
+    def sigma_hat(self, num_pixels: int, t: int, device: str) -> float:
+        return self.betas_hat[t]
 
     def sample(self):
         x = torch.randn(1, self.channels[0], self.width, self.height)
