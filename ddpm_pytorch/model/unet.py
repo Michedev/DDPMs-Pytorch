@@ -162,7 +162,7 @@ class DDPMUNet(pl.LightningModule):
             p = torch.distributions.Normal(0, 1)
             q = torch.distributions.Normal(sqrt(self.alphas_hat[t]) * x_0, (1 - self.alphas_hat[t]))
             return torch.distributions.kl_divergence(q, p)
-        q = torch.distributions.Normal(self.mu_hat_xt_x0(x_t, x_0, t), self.sigma_hat(w * h, t, x_t.device))
+        q = torch.distributions.Normal(self.mu_hat_xt_x0(x_t, x_0, t), self.sigma_hat(t))
         p = torch.distributions.Normal(self.mu_x_t(x_t, t, model_noise), self.sigma_x_t(v, t))
         return torch.distributions.kl_divergence(q, p)
 
@@ -176,7 +176,7 @@ class DDPMUNet(pl.LightningModule):
         return sqrt(self.alphas_hat[t-1]) * self.betas[t] / (1 - self.alphas_hat[t]) * x_0 +\
                sqrt(self.alphas[t]) * (1 - self.alphas_hat[t-1]) / (1 - self.alphas_hat[t]) * x_t
 
-    def sigma_hat(self, num_pixels: int, t: int, device: str) -> float:
+    def sigma_hat(self, t: int) -> float:
         return self.betas_hat[t]
 
     def sample(self):
