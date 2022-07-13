@@ -141,7 +141,7 @@ class DDPMUNet(pl.LightningModule):
         eps = torch.randn_like(batch)
         x_t = sqrt(alpha_hat) * batch + sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
-        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, batch, pred_eps, v, t)
+        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, batch, pred_eps, v, t).mean(dim=0).sum()
         return dict(loss=loss)
 
     def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor, model_noise: torch.Tensor, v: torch.Tensor, t: int):
