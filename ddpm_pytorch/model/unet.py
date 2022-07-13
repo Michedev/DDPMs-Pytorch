@@ -136,12 +136,12 @@ class DDPMUNet(pl.LightningModule):
         return x_recon, v
 
     def training_step(self, batch, batch_idx):
-        t: int = randint(0, self.T - 1)
+        t: int = randint(0, self.T - 1)  #todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(batch)
         x_t = sqrt(alpha_hat) * batch + sqrt(1 - alpha_hat) * eps
-        pred_eps = self(x_t, t)
-        loss = self.mse(eps, pred_eps)  #todo add variational lower bound
+        pred_eps, v = self(x_t, t)
+        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, batch, pred_eps, v, t)
         return dict(loss=loss)
 
     def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor, model_noise: torch.Tensor, v: torch.Tensor, t: int):
@@ -161,7 +161,7 @@ class DDPMUNet(pl.LightningModule):
         elif t == (self.T-1):
             p = torch.distributions.Normal(0, 1)
             q = torch.distributions.Normal(sqrt(self.alphas_hat[t]) * x_0, (1 - self.alphas_hat[t]))
-            return torch.kl_div(q, p)
+            return torch.distributions.kl_divergence(q, p)
         q = torch.distributions.Normal(self.mu_hat_xt_x0(x_t, x_0, t), self.sigma_hat(w * h, t, x_t.device))
         p = torch.distributions.Normal(self.mu_x_t(x_t, t, model_noise), self.sigma_x_t(v, t))
         return torch.distributions.kl_divergence(q, p)
