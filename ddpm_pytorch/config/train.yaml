@@ -11,4 +11,5 @@ device: cuda:0
 steps: -1
 early_stop: true
 steps_patience: 10_000
-noise_steps: 4_000
+steps_noise: 4_000
+steps_checkpoint: 5_000
