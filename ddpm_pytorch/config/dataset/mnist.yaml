@@ -1,11 +1,14 @@
 width: 28
 height: 28
+files_location: ~/.cache/torchvision_dataset
 train:
   _target_: torchvision.datasets.MNIST
+  root: ${dataset.files_location}
   train: true
   download: true
 
 val:
   _target_: torchvision.datasets.MNIST
+  root: ${dataset.files_location}
   train: false
   download: true
