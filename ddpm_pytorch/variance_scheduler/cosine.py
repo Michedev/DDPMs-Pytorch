@@ -9,7 +9,8 @@ class CosineScheduler(Scheduler):
     def __init__(self, T: int, s: float = 0.0008):
         self.T = T
         self._alpha_hats = self.f(torch.arange(self.T), T, s)
-        self._alpha_hats_t_minus_1 = torch.roll(self._alpha_hats, -1, 0)
+        self._alpha_hats_t_minus_1 = torch.roll(self._alpha_hats, 1, 0)
+        self._alpha_hats_t_minus_1[0] = self._alpha_hats_t_minus_1[1]
         self._betas = 1.0 - self._alpha_hats / self._alpha_hats_t_minus_1
         self._alphas = 1.0 - self._betas
         self._betas_hat = (1 - self._alpha_hats_t_minus_1) / (1 - self._alpha_hats) * self._betas
