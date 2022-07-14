@@ -1,6 +1,5 @@
 import hydra
 import pkg_resources
-import torch
 from omegaconf import DictConfig
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl

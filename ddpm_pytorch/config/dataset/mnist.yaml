@@ -1,0 +1,11 @@
+width: 28
+height: 28
+train:
+  _target_: torchvision.datasets.MNIST
+  train: true
+  download: true
+
+val:
+  _target_: torchvision.datasets.MNIST
+  train: false
+  download: true
