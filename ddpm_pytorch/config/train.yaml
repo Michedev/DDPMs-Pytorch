@@ -1,5 +1,5 @@
 defaults:
-  - model: paper
+  - model: unet_paper
   - scheduler: cosine
   - dataset: mnist
   - optimizer: adam_paper
