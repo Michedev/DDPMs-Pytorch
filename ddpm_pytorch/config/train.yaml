@@ -1,0 +1,10 @@
+defaults:
+  - scheduler: cosine
+  - dataset: mnist
+  - optimizer: adam_paper
+
+batch_size: 32
+device: cuda:0
+steps: -1
+early_stop: true
+steps_patience: 10_000

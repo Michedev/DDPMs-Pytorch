@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "ddpm-pytorch"
+version = "0.1.0"
+description = ""
+authors = ["mikedev <mik3dev@gmail.com>"]
+include = [
+    'config/*'
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+torch = "^1.12.0"
+matplotlib = "^3.5.2"
+pytorch-lightning = "^1.6.5"
+seaborn = "^0.11.2"
+numpy = "^1.23.1"
+path = "^16.4.0"
+hydra-core = "^1.2.0"
+torchvision = "^0.13.0"
+
+[tool.poetry.dev-dependencies]
+poethepoet = "^0.15.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
