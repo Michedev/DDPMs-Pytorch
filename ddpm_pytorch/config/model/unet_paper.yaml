@@ -1,0 +1,13 @@
+opt_config:
+  _target_: torch.optim.Adam
+  lr: 1e-4
+channels: [3, 128, 256, 256, 384]
+kernel_sizes: [3, 3, 3, 3]
+strides: [1, 1, 1, 1]
+paddings: [1, 1, 1, 1]
+p_dropouts: [0.1, 0.1, 0.1, 0.1]
+T: ${noise_steps}
+time_embed_size: 100  #dontfound this hp on the paper
+lambda_variational: 0.0001,
+width: ${dataset.width}
+height: ${dataset.height}

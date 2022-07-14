@@ -1,0 +1,4 @@
+# @_global_
+
+model:
+  p_dropouts: [0.3, 0.3, 0.3, 0.3]

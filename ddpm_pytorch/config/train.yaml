@@ -1,10 +1,14 @@
 defaults:
+  - model: paper
   - scheduler: cosine
   - dataset: mnist
   - optimizer: adam_paper
+  - optional model_dataset: ${model}-${dataset}
+  - optional model_scheduler: ${model}-${scheduler}
 
-batch_size: 32
+batch_size: 128
 device: cuda:0
 steps: -1
 early_stop: true
 steps_patience: 10_000
+noise_steps: 4_000

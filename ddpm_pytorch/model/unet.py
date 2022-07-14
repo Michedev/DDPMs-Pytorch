@@ -1,8 +1,11 @@
 from math import sqrt, log
 from random import randint
 from typing import Dict, List, Tuple
+
+import hydra
 import torch
 import pytorch_lightning as pl
+from omegaconf import DictConfig
 from torch import nn
 
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
@@ -75,7 +78,7 @@ class DDPMUNet(pl.LightningModule):
     def __init__(self, channels: List[int], kernel_sizes: List[int], strides: List[int], paddings: List[int],
                  downsample: bool, p_dropouts: List[float], T: int, time_embed_size: int,
                  variance_scheduler: Scheduler, lambda_variational: float, width: int,
-                 height: int):
+                 height: int, opt_config: DictConfig):
         super().__init__()
 
         assert len(channels) == (len(kernel_sizes) + 1) == (len(strides) + 1) == (len(paddings) + 1) == \
@@ -114,6 +117,7 @@ class DDPMUNet(pl.LightningModule):
         self.mse = nn.MSELoss()
         self.width = width
         self.height = height
+        self.opt_config = opt_config
 
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
         time_embedding = positional_embedding_vector(t, self.time_embed_size)
@@ -185,3 +189,7 @@ class DDPMUNet(pl.LightningModule):
             x = 1 / sqrt(self.alphas[t-1]) * \
                 (x - ((1 - self.alphas[t-1]) / sqrt(1 - self.alphas_hat[t-1])) * self(x, t)) + self.variance[t] * z
         return x
+
+    def configure_optimizers(self):
+        return hydra.utils.instantiate(self.opt_config, params=self.parameters())
+
