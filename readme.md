@@ -14,7 +14,7 @@ Training run with hydra
       X(Input image X)-->R1(Res Block);
       B-.-> |Linear| R1;
       subgraph UNetDown
-          direction TD;
+          direction TD
           R1--> |Max Pooling 2x2| R2(Res Block);
           B-.-> |Linear| R2;
           R2--> |Max Pooling 2x2| R3(Res Block);
@@ -25,7 +25,7 @@ Training run with hydra
           B -.- |Linear| R5;
       end
       subgraph UNetUp
-         direction BT;
+         direction BT
           R5 --> R6 (Res Block);
           B -.- |Linear| R6;
           R6 --> R7 (Res Block);
