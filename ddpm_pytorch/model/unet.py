@@ -150,9 +150,21 @@ class DDPMUNet(pl.LightningModule):
         pred_eps, v = self(x_t, t)
         loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
         if (self.iteration % self.log_loss) == 0:
-            self.log('train_loss', loss, on_step=True)
+            self.log('loss/train_loss', loss, on_step=True)
         self.iteration += 1
         return dict(loss=loss)
+
+    def validation_step(self, batch, batch_idx):
+        X, y = batch
+        t: int = randint(0, self.T - 1)  #todo replace this with importance sampling
+        alpha_hat = self.alphas_hat[t]
+        eps = torch.randn_like(X)
+        x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
+        pred_eps, v = self(x_t, t)
+        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
+        self.log('loss/val_loss', loss, on_step=True)
+        return dict(loss=loss)
+
 
     def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor, model_noise: torch.Tensor, v: torch.Tensor, t: int):
         """
@@ -162,7 +174,7 @@ class DDPMUNet(pl.LightningModule):
         :param model_noise: the unet predicted noise
         :param v: the unet predicted coefficients for the variance
         :param t: the time step
-        :return: the pixel wise variational loss, with shape [batch_size, channels, width, height]
+        :return: the pixel-wise variational loss, with shape [batch_size, channels, width, height]
         """
         if t == 0:
             p = torch.distributions.Normal(self.mu_x_t(x_t, t, model_noise), self.sigma_x_t(v, t))
