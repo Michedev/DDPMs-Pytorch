@@ -13,7 +13,9 @@ early_stop: true
 steps_patience: 10_000
 steps_noise: 4_000
 steps_checkpoint: 5_000
+accelerator: null
+devices: null
 
 hydra:
   run:
-    dir: saved_models/${model}-${dataset}${scheduler}-${now:%Y_%m_%d_%H_%M_%S}
+    dir: saved_models/${now:%Y_%m_%d_%H_%M_%S}
