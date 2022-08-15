@@ -9,7 +9,8 @@ import pytorch_lightning as pl
 @hydra.main(pkg_resources.resource_filename("ddpm_pytorch", 'config'), 'train.yaml')
 def train(config: DictConfig):
     scheduler = hydra.utils.instantiate(config.scheduler)
-    model: pl.LightningModule = hydra.utils.instantiate(config.model, variance_scheduler=scheduler)
+    model: pl.LightningModule = hydra.utils.instantiate(config.model, variance_scheduler=scheduler,
+                                                        opt_config=config.optimizer)
     train_dataset: Dataset = hydra.utils.instantiate(config.dataset.train)
     val_dataset: Dataset = hydra.utils.instantiate(config.dataset.val)
 
