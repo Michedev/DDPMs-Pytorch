@@ -16,6 +16,10 @@ def train(config: DictConfig):
     pin_memory = 'cuda' in config.device
     train_dl = DataLoader(train_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
     val_dl = DataLoader(val_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
-    ckpt_callback = ModelCheckpoint('./',  monitor='loss/val_loss', every_n_train_steps=config.checkpoint_steps)
+    ckpt_callback = ModelCheckpoint('./', monitor='loss/val_loss', every_n_train_steps=config.checkpoint_steps)
     trainer = pl.Trainer(checkpoint_callback=ckpt_callback, accelerator=config.accelerator, devices=config.devices)
     trainer.fit(model, train_dl, val_dl)
+
+
+if __name__ == '__main__':
+    train()
