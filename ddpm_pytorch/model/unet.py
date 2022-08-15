@@ -53,6 +53,7 @@ class ResBlock(nn.Module):
         h = h + time_embed
         return self.out_layer(h) + x
 
+
 class ImageSelfAttention(nn.Module):
 
     def __init__(self, num_channels: int, num_heads: int = 1):
@@ -72,6 +73,7 @@ class ImageSelfAttention(nn.Module):
         x = x.reshape(b, w * h, c)
         attn_output = self.attn_layer(x, x, x)
         return attn_output.reshape(b, c, w, h)
+
 
 class DDPMUNet(pl.LightningModule):
 
@@ -101,7 +103,7 @@ class DDPMUNet(pl.LightningModule):
         self.downsample_op = nn.MaxPool2d(kernel_size=2)
         self.middle_block = ResBlock(channels[-1], channels[-1], kernel_sizes[-1], strides[-1],
                                      paddings[-1], time_embed_size, p_dropouts[-1])
-        channels[0] += 1 # because the output is the image plus the estimated variance coefficients
+        channels[0] += 1  # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
             ResBlock(2 * channels[-i - 1], channels[-i], kernel_sizes[-i - 1], strides[-i - 1],
                      paddings[-i - 1], time_embed_size, p_dropouts[-i - 1]) for i in range(len(channels) - 1)
@@ -143,12 +145,13 @@ class DDPMUNet(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         X, y = batch
-        t: int = randint(0, self.T - 1)  #todo replace this with importance sampling
+        t: int = randint(0, self.T - 1)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(X)
         x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
-        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
+        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(
+            dim=0).sum()
         if (self.iteration % self.log_loss) == 0:
             self.log('loss/train_loss', loss, on_step=True)
         self.iteration += 1
@@ -156,17 +159,18 @@ class DDPMUNet(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         X, y = batch
-        t: int = randint(0, self.T - 1)  #todo replace this with importance sampling
+        t: int = randint(0, self.T - 1)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(X)
         x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
-        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
+        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(
+            dim=0).sum()
         self.log('loss/val_loss', loss, on_step=True)
         return dict(loss=loss)
 
-
-    def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor, model_noise: torch.Tensor, v: torch.Tensor, t: int):
+    def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor, model_noise: torch.Tensor, v: torch.Tensor,
+                         t: int):
         """
         Compute variational loss for time step t
         :param x_t: the image at step t obtained with closed form formula from x_0
@@ -179,7 +183,7 @@ class DDPMUNet(pl.LightningModule):
         if t == 0:
             p = torch.distributions.Normal(self.mu_x_t(x_t, t, model_noise), self.sigma_x_t(v, t))
             return - p.log_prob(x_0)
-        elif t == (self.T-1):
+        elif t == (self.T - 1):
             p = torch.distributions.Normal(0, 1)
             q = torch.distributions.Normal(sqrt(self.alphas_hat[t]) * x_0, (1 - self.alphas_hat[t]))
             return torch.distributions.kl_divergence(q, p)
@@ -194,8 +198,8 @@ class DDPMUNet(pl.LightningModule):
         return torch.exp(v * log(self.betas[t]) + (1 - v) * log(self.betas_hat[t]))
 
     def mu_hat_xt_x0(self, x_t: torch.Tensor, x_0: torch.Tensor, t: int):
-        return sqrt(self.alphas_hat[t-1]) * self.betas[t] / (1 - self.alphas_hat[t]) * x_0 +\
-               sqrt(self.alphas[t]) * (1 - self.alphas_hat[t-1]) / (1 - self.alphas_hat[t]) * x_t
+        return sqrt(self.alphas_hat[t - 1]) * self.betas[t] / (1 - self.alphas_hat[t]) * x_0 + \
+               sqrt(self.alphas[t]) * (1 - self.alphas_hat[t - 1]) / (1 - self.alphas_hat[t]) * x_t
 
     def sigma_hat(self, t: int) -> float:
         return self.betas_hat[t]
@@ -204,10 +208,9 @@ class DDPMUNet(pl.LightningModule):
         x = torch.randn(1, self.channels[0], self.width, self.height)
         for t in range(self.T, 0, -1):
             z = 0 if t > 1 else torch.randn_like(x)
-            x = 1 / sqrt(self.alphas[t-1]) * \
-                (x - ((1 - self.alphas[t-1]) / sqrt(1 - self.alphas_hat[t-1])) * self(x, t)) + self.variance[t] * z
+            x = 1 / sqrt(self.alphas[t - 1]) * \
+                (x - ((1 - self.alphas[t - 1]) / sqrt(1 - self.alphas_hat[t - 1])) * self(x, t)) + self.variance[t] * z
         return x
 
     def configure_optimizers(self):
         return hydra.utils.instantiate(self.opt_config, params=self.parameters())
-
