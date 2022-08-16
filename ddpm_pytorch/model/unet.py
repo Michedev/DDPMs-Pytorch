@@ -21,13 +21,13 @@ def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
     Returns: the transformer sinusoidal positional embedding vector
 
     """
-    two_i = 2 * torch.arange(0, dim).unsqueeze(1)
+    two_i = 2 * torch.arange(0, dim).unsqueeze(0)
     return torch.sin(t / torch.pow(10_000, two_i / dim))
 
 
 def positional_embedding_matrix(T: int, dim: int) -> torch.FloatTensor:
     pos = torch.arange(0, T)
-    two_i = 2 * torch.arange(0, dim).unsqueeze(1)
+    two_i = 2 * torch.arange(0, dim).unsqueeze(0)
     return torch.sin(pos / torch.pow(10_000, two_i / dim))
 
 

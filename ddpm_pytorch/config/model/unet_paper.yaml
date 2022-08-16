@@ -5,7 +5,7 @@ strides: [1, 1, 1, 1]
 paddings: [1, 1, 1, 1]
 p_dropouts: [0.1, 0.1, 0.1, 0.1]
 T: ${noise_steps}
-time_embed_size: 100  #dontfound this hp on the paper
+time_embed_size: 100  #did not found this hp on the paper
 lambda_variational: 0.0001
 width: ${dataset.width}
 height: ${dataset.height}
