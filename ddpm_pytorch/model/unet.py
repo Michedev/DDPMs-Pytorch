@@ -80,7 +80,7 @@ class DDPMUNet(pl.LightningModule):
     def __init__(self, channels: List[int], kernel_sizes: List[int], strides: List[int], paddings: List[int],
                  downsample: bool, p_dropouts: List[float], T: int, time_embed_size: int,
                  variance_scheduler: Scheduler, lambda_variational: float, width: int,
-                 height: int, opt_config: DictConfig, log_loss: int):
+                 height: int, log_loss: int):
         super().__init__()
 
         assert len(channels) == (len(kernel_sizes) + 1) == (len(strides) + 1) == (len(paddings) + 1) == \
@@ -119,7 +119,6 @@ class DDPMUNet(pl.LightningModule):
         self.mse = nn.MSELoss()
         self.width = width
         self.height = height
-        self.opt_config = opt_config
         self.log_loss = log_loss
         self.iteration = 0
 
@@ -213,4 +212,4 @@ class DDPMUNet(pl.LightningModule):
         return x
 
     def configure_optimizers(self):
-        return hydra.utils.instantiate(self.opt_config, params=self.parameters())
+        return torch.optim.Adam(params=self.parameters(), lr=1e-4)
