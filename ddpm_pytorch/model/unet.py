@@ -7,7 +7,7 @@ import torch
 import pytorch_lightning as pl
 from omegaconf import DictConfig
 from torch import nn
-
+from torch.nn import functional as F
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
 
@@ -110,7 +110,6 @@ class DDPMUNet(pl.LightningModule):
                               paddings[-i - 1], time_embed_size, p_dropouts[-i - 1]) for i in range(len(channels) - 1)
         ])
         self.self_attn = ImageSelfAttention(channels[2])
-        self.upsample_op = nn.UpsamplingNearest2d(size=2)
         self.var_scheduler = variance_scheduler
         self.lambda_variational = lambda_variational
         self.alphas_hat: torch.FloatTensor = self.var_scheduler.get_alpha_hat()
@@ -129,17 +128,18 @@ class DDPMUNet(pl.LightningModule):
         h = x
         for i, downsample_block in enumerate(self.downsample_blocks):
             h = downsample_block(h, time_embedding)
-            if self.use_downsample and i != (len(self.downsample_blocks) - 1):
-                h = self.downsample_op(h)
             if i == 2:
                 h = self.self_attn(h)
-            hs.append(h)
+            if i != (len(self.downsample_blocks)-1): hs.append(h)
+            if self.use_downsample and i != (len(self.downsample_blocks) - 1):
+                h = self.downsample_op(h)
+        h = self.middle_block(h, time_embedding)
         for i, upsample_block in enumerate(self.upsample_blocks):
             if i != 0:
                 h = torch.cat([h, hs[-i]], dim=1)
             h = upsample_block(h, time_embedding)
-            if self.use_downsample and i != 0:
-                h = self.upsample_op(h)
+            if self.use_downsample and (i != (len(self.upsample_blocks)-1)):
+                h = F.interpolate(h, size=hs[-i-1].shape[-1], mode='nearest')
         x_recon, v = h[:, :3], h[:, 3:]
         return x_recon, v
 
