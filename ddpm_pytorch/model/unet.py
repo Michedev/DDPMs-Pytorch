@@ -123,6 +123,7 @@ class DDPMUNet(pl.LightningModule):
         self.iteration = 0
 
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        x_channels = x.shape[1]
         tg.guard(x, "B, C, W, H")
         time_embedding = positional_embedding_vector(t, self.time_embed_size)
         hs = []
@@ -141,7 +142,7 @@ class DDPMUNet(pl.LightningModule):
             h = upsample_block(h, time_embedding)
             if self.use_downsample and (i != (len(self.upsample_blocks)-1)):
                 h = F.interpolate(h, size=hs[-i-1].shape[-1], mode='nearest')
-        x_recon, v = h[:, :3], h[:, 3:]
+        x_recon, v = h[:, :x_channels], h[:, x_channels:]
         tg.guard(x_recon, "B, C, W, H")
         tg.guard(v, "B, C, W, H")
         return x_recon, v
