@@ -9,7 +9,9 @@ from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
-import tensorguard as tg
+
+
+# import tensorguard as tg
 
 def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
     """
@@ -106,7 +108,8 @@ class DDPMUNet(pl.LightningModule):
                                               paddings[-1], time_embed_size, p_dropouts[-1])
         channels[0] += 1  # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
-            ResBlockTimeEmbed((2 if i != 0 else 1) * channels[-i - 1], channels[-i-2], kernel_sizes[-i - 1], strides[-i - 1],
+            ResBlockTimeEmbed((2 if i != 0 else 1) * channels[-i - 1], channels[-i - 2], kernel_sizes[-i - 1],
+                              strides[-i - 1],
                               paddings[-i - 1], time_embed_size, p_dropouts[-i - 1]) for i in range(len(channels) - 1)
         ])
         self.self_attn = ImageSelfAttention(channels[2])
@@ -124,7 +127,7 @@ class DDPMUNet(pl.LightningModule):
 
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
         x_channels = x.shape[1]
-        tg.guard(x, "B, C, W, H")
+        # tg.guard(x, "B, C, W, H")
         time_embedding = positional_embedding_vector(t, self.time_embed_size)
         hs = []
         h = x
@@ -132,7 +135,7 @@ class DDPMUNet(pl.LightningModule):
             h = downsample_block(h, time_embedding)
             if i == 2:
                 h = self.self_attn(h)
-            if i != (len(self.downsample_blocks)-1): hs.append(h)
+            if i != (len(self.downsample_blocks) - 1): hs.append(h)
             if self.use_downsample and i != (len(self.downsample_blocks) - 1):
                 h = self.downsample_op(h)
         h = self.middle_block(h, time_embedding)
@@ -140,11 +143,11 @@ class DDPMUNet(pl.LightningModule):
             if i != 0:
                 h = torch.cat([h, hs[-i]], dim=1)
             h = upsample_block(h, time_embedding)
-            if self.use_downsample and (i != (len(self.upsample_blocks)-1)):
-                h = F.interpolate(h, size=hs[-i-1].shape[-1], mode='nearest')
+            if self.use_downsample and (i != (len(self.upsample_blocks) - 1)):
+                h = F.interpolate(h, size=hs[-i - 1].shape[-1], mode='nearest')
         x_recon, v = h[:, :x_channels], h[:, x_channels:]
-        tg.guard(x_recon, "B, C, W, H")
-        tg.guard(v, "B, C, W, H")
+        # tg.guard(x_recon, "B, C, W, H")
+        # tg.guard(v, "B, C, W, H")
         return x_recon, v
 
     def training_step(self, batch, batch_idx):
@@ -196,19 +199,39 @@ class DDPMUNet(pl.LightningModule):
         return torch.distributions.kl_divergence(q, p)
 
     def mu_x_t(self, x_t: torch.Tensor, t: int, model_noise: torch.Tensor) -> torch.Tensor:
-        x =  1 / sqrt(self.alphas[t]) * (x_t - self.betas[t] / sqrt(1 - self.alphas_hat[t]) * model_noise)
-        tg.guard(x, "B, C, W, H")
+        """
+
+        :param x_t: the noised image
+        :param t: the time step of $x_t$
+        :param model_noise: the model estimated noise
+        :return: the mean of $q(x_t | x_0)$
+        """
+        x = 1 / sqrt(self.alphas[t]) * (x_t - self.betas[t] / sqrt(1 - self.alphas_hat[t]) * model_noise)
+        # tg.guard(x, "B, C, W, H")
         return x
 
     def sigma_x_t(self, v: torch.Tensor, t: int) -> torch.Tensor:
+        """
+        Compute the varaince at time step t as defined in "Improving Denoising Diffusion probabilistic Models", eqn 15 page 4
+        :param v: the neural network "logits" used to compute the variance
+        :param t: the target time step
+        :return: the estimated variance at time step t
+        """
         x = torch.exp(v * log(self.betas[t]) + (1 - v) * log(self.betas_hat[t]))
-        tg.guard(x, "B, C, W, H")
+        # tg.guard(x, "B, C, W, H")
         return x
 
     def mu_hat_xt_x0(self, x_t: torch.Tensor, x_0: torch.Tensor, t: int):
+        """
+        Compute $\hat{mu}(x_t, x_0)$ from "Improving Denoising Diffusion probabilistic Models", eqn 11 page 2
+        :param x_t: The noised image at step t
+        :param x_0: the original image
+        :param t: the time step of $x_t$
+        :return: the mean of distribution $q(x_{t-1} | x_t, x_0)$
+        """
         x = sqrt(self.alphas_hat[t - 1]) * self.betas[t] / (1 - self.alphas_hat[t]) * x_0 + \
-               sqrt(self.alphas[t]) * (1 - self.alphas_hat[t - 1]) / (1 - self.alphas_hat[t]) * x_t
-        tg.guard(x, "B, C, W, H")
+            sqrt(self.alphas[t]) * (1 - self.alphas_hat[t - 1]) / (1 - self.alphas_hat[t]) * x_t
+        # tg.guard(x, "B, C, W, H")
         return x
 
     def sigma_hat(self, t: int) -> float:
