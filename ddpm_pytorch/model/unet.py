@@ -106,7 +106,7 @@ class DDPMUNet(pl.LightningModule):
                                               paddings[-1], time_embed_size, p_dropouts[-1])
         channels[0] += 1  # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
-            ResBlockTimeEmbed((2 if i != 0 else 1) * channels[-i - 1], channels[-i], kernel_sizes[-i - 1], strides[-i - 1],
+            ResBlockTimeEmbed((2 if i != 0 else 1) * channels[-i - 1], channels[-i-2], kernel_sizes[-i - 1], strides[-i - 1],
                               paddings[-i - 1], time_embed_size, p_dropouts[-i - 1]) for i in range(len(channels) - 1)
         ])
         self.self_attn = ImageSelfAttention(channels[2])
