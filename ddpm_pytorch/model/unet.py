@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
-
+import tensorguard as tg
 
 def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
     """
@@ -123,6 +123,7 @@ class DDPMUNet(pl.LightningModule):
         self.iteration = 0
 
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        tg.guard(x, "B, C, W, H")
         time_embedding = positional_embedding_vector(t, self.time_embed_size)
         hs = []
         h = x
@@ -141,6 +142,8 @@ class DDPMUNet(pl.LightningModule):
             if self.use_downsample and (i != (len(self.upsample_blocks)-1)):
                 h = F.interpolate(h, size=hs[-i-1].shape[-1], mode='nearest')
         x_recon, v = h[:, :3], h[:, 3:]
+        tg.guard(x_recon, "B, C, W, H")
+        tg.guard(v, "B, C, W, H")
         return x_recon, v
 
     def training_step(self, batch, batch_idx):
@@ -192,14 +195,20 @@ class DDPMUNet(pl.LightningModule):
         return torch.distributions.kl_divergence(q, p)
 
     def mu_x_t(self, x_t: torch.Tensor, t: int, model_noise: torch.Tensor) -> torch.Tensor:
-        return 1 / sqrt(self.alphas[t]) * (x_t - self.betas[t] / sqrt(1 - self.alphas_hat[t]) * model_noise)
+        x =  1 / sqrt(self.alphas[t]) * (x_t - self.betas[t] / sqrt(1 - self.alphas_hat[t]) * model_noise)
+        tg.guard(x, "B, C, W, H")
+        return x
 
     def sigma_x_t(self, v: torch.Tensor, t: int) -> torch.Tensor:
-        return torch.exp(v * log(self.betas[t]) + (1 - v) * log(self.betas_hat[t]))
+        x = torch.exp(v * log(self.betas[t]) + (1 - v) * log(self.betas_hat[t]))
+        tg.guard(x, "B, C, W, H")
+        return x
 
     def mu_hat_xt_x0(self, x_t: torch.Tensor, x_0: torch.Tensor, t: int):
-        return sqrt(self.alphas_hat[t - 1]) * self.betas[t] / (1 - self.alphas_hat[t]) * x_0 + \
+        x = sqrt(self.alphas_hat[t - 1]) * self.betas[t] / (1 - self.alphas_hat[t]) * x_0 + \
                sqrt(self.alphas[t]) * (1 - self.alphas_hat[t - 1]) / (1 - self.alphas_hat[t]) * x_t
+        tg.guard(x, "B, C, W, H")
+        return x
 
     def sigma_hat(self, t: int) -> float:
         return self.betas_hat[t]
