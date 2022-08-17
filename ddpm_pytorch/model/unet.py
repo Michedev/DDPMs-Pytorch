@@ -49,7 +49,8 @@ class ResBlockTimeEmbed(nn.Module):
     def forward(self, x, time_embed):
         x = self.conv(x)
         h = self.groupnorm(x)
-        time_embed = self.l_embedding(time_embed).view(time_embed.shape[0], time_embed.shape[1], 1, 1)
+        time_embed = self.l_embedding(time_embed)
+        time_embed = time_embed.view(time_embed.shape[0], time_embed.shape[1], 1, 1)
         h = h + time_embed
         return self.out_layer(h) + x
 
