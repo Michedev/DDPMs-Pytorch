@@ -21,17 +21,17 @@ def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
     Returns: the transformer sinusoidal positional embedding vector
 
     """
-    two_i = 2 * torch.arange(0, dim).unsqueeze(0)
-    return torch.sin(t / torch.pow(10_000, two_i / dim))
+    two_i = 2 * torch.arange(0, dim)
+    return torch.sin(t / torch.pow(10_000, two_i / dim)).unsqueeze(0)
 
 
 def positional_embedding_matrix(T: int, dim: int) -> torch.FloatTensor:
     pos = torch.arange(0, T)
-    two_i = 2 * torch.arange(0, dim).unsqueeze(0)
-    return torch.sin(pos / torch.pow(10_000, two_i / dim))
+    two_i = 2 * torch.arange(0, dim)
+    return torch.sin(pos / torch.pow(10_000, two_i / dim)).unsqueeze(0)
 
 
-class ResBlock(nn.Module):
+class ResBlockTimeEmbed(nn.Module):
 
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int,
                  time_embed_size: int, p_dropout: float):
@@ -91,22 +91,22 @@ class DDPMUNet(pl.LightningModule):
         self.T = T
         self.time_embed_size = time_embed_size
         self.downsample_blocks = nn.ModuleList([
-            ResBlock(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
-                     paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
+            ResBlockTimeEmbed(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
+                              paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
         ])
 
         self.downsample_blocks = nn.ModuleList([
-            ResBlock(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
-                     paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
+            ResBlockTimeEmbed(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
+                              paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
         ])
         self.use_downsample = downsample
         self.downsample_op = nn.MaxPool2d(kernel_size=2)
-        self.middle_block = ResBlock(channels[-1], channels[-1], kernel_sizes[-1], strides[-1],
-                                     paddings[-1], time_embed_size, p_dropouts[-1])
+        self.middle_block = ResBlockTimeEmbed(channels[-1], channels[-1], kernel_sizes[-1], strides[-1],
+                                              paddings[-1], time_embed_size, p_dropouts[-1])
         channels[0] += 1  # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
-            ResBlock(2 * channels[-i - 1], channels[-i], kernel_sizes[-i - 1], strides[-i - 1],
-                     paddings[-i - 1], time_embed_size, p_dropouts[-i - 1]) for i in range(len(channels) - 1)
+            ResBlockTimeEmbed(2 * channels[-i - 1], channels[-i], kernel_sizes[-i - 1], strides[-i - 1],
+                              paddings[-i - 1], time_embed_size, p_dropouts[-i - 1]) for i in range(len(channels) - 1)
         ])
         self.self_attn = ImageSelfAttention(channels[2])
         self.upsample_op = nn.UpsamplingNearest2d(size=2)
