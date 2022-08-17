@@ -72,7 +72,7 @@ class ImageSelfAttention(nn.Module):
         """
         b, c, w, h = x.shape
         x = x.reshape(b, w * h, c)
-        attn_output = self.attn_layer(x, x, x)
+        attn_output, _ = self.attn_layer(x, x, x)
         return attn_output.reshape(b, c, w, h)
 
 
