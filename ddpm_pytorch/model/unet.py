@@ -90,7 +90,6 @@ class UNetTimeStep(nn.Module):
                                       f'{(len(strides) + 1)} == {(len(paddings) + 1)} == \
                                                               {(len(p_dropouts) + 1)}'
         self.channels = channels
-        self.T = T
         self.time_embed_size = time_embed_size
         self.downsample_blocks = nn.ModuleList([
             ResBlockTimeEmbed(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
