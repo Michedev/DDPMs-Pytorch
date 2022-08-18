@@ -213,13 +213,6 @@ class DDPM(pl.LightningModule):
                                        sigma_x_t(v, t, self.betas_hat, self.betas))
         return torch.distributions.kl_divergence(q, p)
 
-    def sample(self):
-        x = torch.randn(1, self.channels[0], self.width, self.height)
-        for t in range(self.T, 0, -1):
-            z = 0 if t > 1 else torch.randn_like(x)
-            x = 1 / sqrt(self.alphas[t - 1]) * \
-                (x - ((1 - self.alphas[t - 1]) / sqrt(1 - self.alphas_hat[t - 1])) * self(x, t)) + self.variance[t] * z
-        return x
 
     def configure_optimizers(self):
         return torch.optim.Adam(params=self.parameters(), lr=1e-4)
@@ -229,7 +222,7 @@ class DDPM(pl.LightningModule):
         T = T or self.T
         X_noise = torch.randn(batch_size, self.channels[0], self.width, self.height)
         for t in range(T - 1, 0, -1):
-            eps, v = self.denoiser_module(X_noise, T)
+            eps, v = self.denoiser_module(X_noise, t)
             sigma = self.sigma_x_t(v, t)
             if t == 0:
                 sigma.fill_(0)
