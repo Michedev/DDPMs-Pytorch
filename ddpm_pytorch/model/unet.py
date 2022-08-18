@@ -235,7 +235,7 @@ class DDPM(pl.LightningModule):
         X_noise = torch.randn(batch_size, self.input_channels, self.width, self.height)
         for t in range(T - 1, 0, -1):
             eps, v = self.denoiser_module(X_noise, t)
-            sigma = self.sigma_x_t(v, t)
+            sigma = sigma_x_t(v, t, self.betas_hat, self.betas)
             if t == 0:
                 sigma.fill_(0)
             alpha_t = self.alphas[t]
