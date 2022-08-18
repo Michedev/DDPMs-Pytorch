@@ -145,8 +145,9 @@ class DDPM(pl.LightningModule):
 
     def __init__(self, denoiser_module: nn.Module, T: int,
                  variance_scheduler: Scheduler, lambda_variational: float, width: int,
-                 height: int, log_loss: int):
+                 height: int, input_channels: int, log_loss: int):
         super().__init__()
+        self.input_channels = input_channels
         self.denoiser_module = denoiser_module
         self.T = T
 
@@ -231,7 +232,7 @@ class DDPM(pl.LightningModule):
     def generate(self, batch_size: int = None, T: Optional[int] = None):
         batch_size = batch_size or 1
         T = T or self.T
-        X_noise = torch.randn(batch_size, self.channels[0], self.width, self.height)
+        X_noise = torch.randn(batch_size, self.input_channels, self.width, self.height)
         for t in range(T - 1, 0, -1):
             eps, v = self.denoiser_module(X_noise, t)
             sigma = self.sigma_x_t(v, t)

@@ -13,3 +13,4 @@ lambda_variational: 0.0001
 width: ${dataset.width}
 height: ${dataset.height}
 log_loss: 1_000
+input_channels: ${dataset.channels}
