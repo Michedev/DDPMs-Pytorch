@@ -5,6 +5,7 @@ from typing import Dict, List, Tuple, Optional
 import hydra
 import torch
 import pytorch_lightning as pl
+import torchvision.utils
 from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
@@ -173,10 +174,18 @@ class DDPM(pl.LightningModule):
             dim=0).sum()
         if (self.iteration % self.log_loss) == 0:
             self.log('loss/train_loss', loss, on_step=True)
+            norm_params = sum(
+                [torch.norm(p.grad) for p in self.parameters() if
+                 hasattr(p, 'grad') and p.grad is not None])
+            self.log('grad_norm', norm_params)
         self.iteration += 1
         return dict(loss=loss)
 
     def validation_step(self, batch, batch_idx):
+        if batch_idx == 0:
+            gen_images = self.generate(32)
+            gen_images = torchvision.utils.make_grid(gen_images)
+            self.logger.experiment.add_image('gen_val_images', gen_images, self.current_epoch)
         X, y = batch
         t: int = randint(0, self.T - 1)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
@@ -187,6 +196,7 @@ class DDPM(pl.LightningModule):
             dim=0).sum()
         self.log('loss/val_loss', loss, on_step=True)
         return dict(loss=loss)
+
 
     def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor, model_noise: torch.Tensor, v: torch.Tensor,
                          t: int):
@@ -212,7 +222,6 @@ class DDPM(pl.LightningModule):
         p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas),
                                        sigma_x_t(v, t, self.betas_hat, self.betas))
         return torch.distributions.kl_divergence(q, p)
-
 
     def configure_optimizers(self):
         return torch.optim.Adam(params=self.parameters(), lr=1e-4)
