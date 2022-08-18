@@ -110,6 +110,8 @@ class UNetTimeStep(nn.Module):
                               strides[-i - 1],
                               paddings[-i - 1], time_embed_size, p_dropouts[-i - 1]) for i in range(len(channels) - 1)
         ])
+        self.dropouts = nn.ModuleList([nn.Dropout2d(p) for p in p_dropouts])
+        self.p_dropouts = p_dropouts
         self.self_attn = ImageSelfAttention(channels[2])
 
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -122,6 +124,7 @@ class UNetTimeStep(nn.Module):
             h = downsample_block(h, time_embedding)
             if i == 2:
                 h = self.self_attn(h)
+            h = self.dropouts[i](h)
             if i != (len(self.downsample_blocks) - 1): hs.append(h)
             if self.use_downsample and i != (len(self.downsample_blocks) - 1):
                 h = self.downsample_op(h)
