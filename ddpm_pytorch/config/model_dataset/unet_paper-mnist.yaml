@@ -2,4 +2,4 @@
 
 model:
   denoiser_module:
-    channels: [1, 16, 32, 32, 48]
+    channels: [1, 32, 64, 64, 96]
