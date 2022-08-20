@@ -146,6 +146,16 @@ class DDPM(pl.LightningModule):
     def __init__(self, denoiser_module: nn.Module, T: int,
                  variance_scheduler: Scheduler, lambda_variational: float, width: int,
                  height: int, input_channels: int, log_loss: int):
+        """
+        :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, t)
+        :param T: the amount of noising steps
+        :param variance_scheduler: the variance scheduler cited in DDPM paper. See folder variance_scheduler for practical implementation
+        :param lambda_variational: the coefficient in from of variational loss
+        :param width: image width
+        :param height: image height
+        :param input_channels: image input channels
+        :param log_loss: frequency of logging loss function during training
+        """
         super().__init__()
         self.input_channels = input_channels
         self.denoiser_module = denoiser_module
@@ -166,7 +176,7 @@ class DDPM(pl.LightningModule):
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.denoiser_module(x, t)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         X, y = batch
         t: int = randint(0, self.T - 1)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
@@ -184,7 +194,7 @@ class DDPM(pl.LightningModule):
         self.iteration += 1
         return dict(loss=loss)
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         if batch_idx == 0:
             gen_images = self.generate(32)
             gen_images = torchvision.utils.make_grid(gen_images)
@@ -195,14 +205,13 @@ class DDPM(pl.LightningModule):
         eps = torch.randn_like(X)
         x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
-        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(
-            dim=0).sum()
+        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t)\
+            .mean(dim=0).sum()
         self.log('loss/val_loss', loss, on_step=True)
         return dict(loss=loss)
 
-
-    def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor, model_noise: torch.Tensor, v: torch.Tensor,
-                         t: int):
+    def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor,
+                         model_noise: torch.Tensor, v: torch.Tensor, t: int):
         """
         Compute variational loss for time step t
         :param x_t: the image at step t obtained with closed form formula from x_0
@@ -222,7 +231,7 @@ class DDPM(pl.LightningModule):
             return torch.distributions.kl_divergence(q, p)
         q = torch.distributions.Normal(mu_hat_xt_x0(x_t, x_0, t, self.alphas_hat, self.alphas, self.betas),
                                        sigma_hat(t, self.betas_hat))
-        p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas),
+        p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas).detach(),
                                        sigma_x_t(v, t, self.betas_hat, self.betas))
         return torch.distributions.kl_divergence(q, p)
 
@@ -233,11 +242,12 @@ class DDPM(pl.LightningModule):
         batch_size = batch_size or 1
         T = T or self.T
         X_noise = torch.randn(batch_size, self.input_channels, self.width, self.height)
-        for t in range(T - 1, 0, -1):
+        for t in range(T - 1, -1, -1):
             eps, v = self.denoiser_module(X_noise, t)
             sigma = sigma_x_t(v, t, self.betas_hat, self.betas)
+            z = torch.randn_like(X_noise)
             if t == 0:
-                sigma.fill_(0)
+                z.fill_(0)
             alpha_t = self.alphas[t]
-            X_noise = 1 / (sqrt(alpha_t)) * (X_noise - ((1 - alpha_t) / sqrt(1 - self.alphas_hat[t])) * eps) + sigma
+            X_noise = 1 / (sqrt(alpha_t)) * (X_noise - ((1 - alpha_t) / sqrt(1 - self.alphas_hat[t])) * eps) + sigma * z
         return X_noise
