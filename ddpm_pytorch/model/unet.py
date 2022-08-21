@@ -141,7 +141,7 @@ class UNetTimeStep(nn.Module):
         return x_recon, v
 
 
-class DDPM(pl.LightningModule):
+class GaussianDDPM(pl.LightningModule):
 
     def __init__(self, denoiser_module: nn.Module, T: int,
                  variance_scheduler: Scheduler, lambda_variational: float, width: int,

@@ -1,4 +1,4 @@
-_target_: ddpm_pytorch.model.unet.DDPM
+_target_: ddpm_pytorch.model.unet.GaussianDDPM
 denoiser_module:
   _target_: ddpm_pytorch.model.unet.UNetTimeStep
   channels: [3, 128, 256, 256, 384]

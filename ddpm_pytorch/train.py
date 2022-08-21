@@ -17,7 +17,9 @@ def train(config: DictConfig):
     train_dl = DataLoader(train_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
     val_dl = DataLoader(val_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
     ckpt_callback = ModelCheckpoint('./', monitor='loss/val_loss')
-    trainer = pl.Trainer(callbacks=[ckpt_callback], accelerator=config.accelerator, devices=config.devices)
+    trainer = pl.Trainer(callbacks=[ckpt_callback], accelerator=config.accelerator, devices=config.devices,
+                         gradient_clip_val=config.gradient_clip_val,
+                         gradient_clip_algorithm=config.gradient_clip_algorithm)
     trainer.fit(model, train_dl, val_dl)
 
 
