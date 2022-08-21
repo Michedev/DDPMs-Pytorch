@@ -247,12 +247,12 @@ class GaussianDDPM(pl.LightningModule):
         :return: the pixel-wise variational loss, with shape [batch_size, channels, width, height]
         """
         vlb = 0.0
-        t_eq_0 = t == 0
+        t_eq_0 = (t == 0).reshape(-1, 1, 1, 1)
         if torch.any(t_eq_0):
             p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas),
                                            sigma_x_t(v, t, self.betas_hat, self.betas))
             vlb += - p.log_prob(x_0) * t_eq_0.float()
-        t_eq_last = t == (self.T - 1)
+        t_eq_last = (t == (self.T - 1)).reshape(-1, 1, 1, 1)
         if torch.any(t_eq_last):
             p = torch.distributions.Normal(0, 1)
             q = torch.distributions.Normal(sqrt(self.alphas_hat[t]) * x_0, (1 - self.alphas_hat[t]))
@@ -261,7 +261,7 @@ class GaussianDDPM(pl.LightningModule):
                                        sigma_hat_xt_x0(t, self.betas_hat))  # q(x_{t-1} | x_t, x_0)
         p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas).detach(),
                                        sigma_x_t(v, t, self.betas_hat, self.betas)) # p(x_t | x_{t-1})
-        vlb += torch.distributions.kl_divergence(q, p) * (~t_eq_last) * (~t_eq_0)
+        vlb += torch.distributions.kl_divergence(q, p) * (~t_eq_last).float() * (~t_eq_0).float()
         return vlb
 
     def configure_optimizers(self):
