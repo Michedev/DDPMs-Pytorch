@@ -201,7 +201,7 @@ class GaussianDDPM(pl.LightningModule):
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         X, y = batch
-        t: torch.Tensor = torch.randint(0, self.T - 1, X.shape[0],
+        t: torch.Tensor = torch.randint(0, self.T - 1, (X.shape[0],),
                                         device=X.device)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(X)
@@ -224,7 +224,7 @@ class GaussianDDPM(pl.LightningModule):
             gen_images = torchvision.utils.make_grid(gen_images)
             self.logger.experiment.add_image('gen_val_images', gen_images, self.current_epoch)
         X, y = batch
-        t: torch.Tensor = torch.randint(0, self.T - 1, X.shape[0],
+        t: torch.Tensor = torch.randint(0, self.T - 1, (X.shape[0],),
                                         device=X.device)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(X)
@@ -255,9 +255,9 @@ class GaussianDDPM(pl.LightningModule):
             q = torch.distributions.Normal(sqrt(self.alphas_hat[t]) * x_0, (1 - self.alphas_hat[t]))
             return torch.distributions.kl_divergence(q, p)
         q = torch.distributions.Normal(mu_hat_xt_x0(x_t, x_0, t, self.alphas_hat, self.alphas, self.betas),
-                                       sigma_hat_xt_x0(t, self.betas_hat))
+                                       sigma_hat_xt_x0(t, self.betas_hat))  # q(x_{t-1} | x_t, x_0)
         p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas).detach(),
-                                       sigma_x_t(v, t, self.betas_hat, self.betas))
+                                       sigma_x_t(v, t, self.betas_hat, self.betas)) # p(x_t | x_{t-1})
         return torch.distributions.kl_divergence(q, p)
 
     def configure_optimizers(self):
