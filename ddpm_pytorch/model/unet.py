@@ -203,7 +203,7 @@ class GaussianDDPM(pl.LightningModule):
         X, y = batch
         t: torch.Tensor = torch.randint(0, self.T - 1, (X.shape[0],),
                                         device=X.device)  # todo replace this with importance sampling
-        alpha_hat = self.alphas_hat[t]
+        alpha_hat = self.alphas_hat[t].reshape(-1, 1, 1, 1)
         eps = torch.randn_like(X)
         x_t = torch.sqrt(alpha_hat) * X + torch.sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
@@ -220,7 +220,7 @@ class GaussianDDPM(pl.LightningModule):
 
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         if batch_idx == 0:
-            gen_images = self.generate(32)
+            gen_images = self.generate(16)
             gen_images = torchvision.utils.make_grid(gen_images)
             self.logger.experiment.add_image('gen_val_images', gen_images, self.current_epoch)
         X, y = batch
