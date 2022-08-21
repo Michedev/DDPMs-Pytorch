@@ -226,7 +226,7 @@ class GaussianDDPM(pl.LightningModule):
         X, y = batch
         t: torch.Tensor = torch.randint(0, self.T - 1, (X.shape[0],),
                                         device=X.device)  # todo replace this with importance sampling
-        alpha_hat = self.alphas_hat[t]
+        alpha_hat = self.alphas_hat[t].reshape(-1, 1, 1, 1)
         eps = torch.randn_like(X)
         x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
