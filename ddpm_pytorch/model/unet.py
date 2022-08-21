@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
 # import tensorguard as tg
-from distributions import mu_hat_xt_x0, mu_x_t, sigma_x_t, sigma_hat
+from distributions import mu_hat_xt_x0, mu_x_t, sigma_x_t, sigma_hat_xt_x0
 
 
 def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
@@ -178,7 +178,7 @@ class GaussianDDPM(pl.LightningModule):
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         X, y = batch
-        t: int = randint(0, self.T - 1)  # todo replace this with importance sampling
+        t: torch.Tensor = torch.randint(0, self.T - 1, X.shape[0], device=X.device)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(X)
         x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
@@ -211,7 +211,7 @@ class GaussianDDPM(pl.LightningModule):
         return dict(loss=loss)
 
     def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor,
-                         model_noise: torch.Tensor, v: torch.Tensor, t: int):
+                         model_noise: torch.Tensor, v: torch.Tensor, t: torch.Tensor):
         """
         Compute variational loss for time step t
         :param x_t: the image at step t obtained with closed form formula from x_0
@@ -230,7 +230,7 @@ class GaussianDDPM(pl.LightningModule):
             q = torch.distributions.Normal(sqrt(self.alphas_hat[t]) * x_0, (1 - self.alphas_hat[t]))
             return torch.distributions.kl_divergence(q, p)
         q = torch.distributions.Normal(mu_hat_xt_x0(x_t, x_0, t, self.alphas_hat, self.alphas, self.betas),
-                                       sigma_hat(t, self.betas_hat))
+                                       sigma_hat_xt_x0(t, self.betas_hat))
         p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas).detach(),
                                        sigma_x_t(v, t, self.betas_hat, self.betas))
         return torch.distributions.kl_divergence(q, p)
