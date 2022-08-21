@@ -14,7 +14,7 @@ def mu_x_t(x_t: torch.Tensor, t: torch.Tensor, model_noise: torch.Tensor, alphas
     :param alphas: sequence of $\alpha$ used for variance scheduling
     :return: the mean of $q(x_t | x_0)$
     """
-    x = 1 / sqrt(alphas[t].view(-1, 1, 1, 1)) * (x_t - betas[t].view(-1, 1, 1, 1) / sqrt(1 - alphas_hat[t].view(-1, 1, 1, 1)) * model_noise)
+    x = 1 / sqrt(alphas[t].reshape(-1, 1, 1, 1)) * (x_t - betas[t].reshape(-1, 1, 1, 1) / sqrt(1 - alphas_hat[t].reshape(-1, 1, 1, 1)) * model_noise)
     # tg.guard(x, "B, C, W, H")
     return x
 
@@ -28,8 +28,8 @@ def sigma_x_t(v: torch.Tensor, t: torch.Tensor, betas_hat: torch.Tensor, betas: 
     :param betas: sequence of $\beta$ used for variance scheduling
     :return: the estimated variance at time step t
     """
-    v = v.view(-1, 1, 1, 1)
-    x = torch.exp(v * log(betas[t].view(-1, 1, 1, 1)) + (1 - v) * log(betas_hat[t].view(-1, 1, 1, 1)))
+    v = v.reshape(-1, 1, 1, 1)
+    x = torch.exp(v * log(betas[t].reshape(-1, 1, 1, 1)) + (1 - v) * log(betas_hat[t].reshape(-1, 1, 1, 1)))
     # tg.guard(x, "B, C, W, H")
     return x
 
@@ -46,9 +46,9 @@ def mu_hat_xt_x0(x_t: torch.Tensor, x_0: torch.Tensor, t: torch.Tensor, alphas_h
     :param betas: sequence of $\beta$ used for variance scheduling [T}
     :return: the mean of distribution $q(x_{t-1} | x_t, x_0)$
     """
-    one_min_alpha_hat = (1 - alphas_hat[t].view(-1, 1, 1, 1))
-    x = torch.sqrt(alphas_hat[t - 1].view(-1, 1, 1, 1)) * betas[t].view(-1, 1, 1, 1) / one_min_alpha_hat * x_0 + \
-        torch.sqrt(alphas[t].view(-1, 1, 1, 1)) * (1 - alphas_hat[t - 1].view(-1, 1, 1, 1)) / one_min_alpha_hat * x_t
+    one_min_alpha_hat = (1 - alphas_hat[t].reshape(-1, 1, 1, 1))
+    x = torch.sqrt(alphas_hat[t - 1].reshape(-1, 1, 1, 1)) * betas[t].reshape(-1, 1, 1, 1) / one_min_alpha_hat * x_0 + \
+        torch.sqrt(alphas[t].reshape(-1, 1, 1, 1)) * (1 - alphas_hat[t - 1].reshape(-1, 1, 1, 1)) / one_min_alpha_hat * x_t
     # tg.guard(x, "B, C, W, H")
     return x
 
@@ -60,4 +60,4 @@ def sigma_hat_xt_x0(t: torch.Tensor, betas_hat: torch.Tensor) -> torch.Tensor:
     :param betas_hat: the array of beta hats [T]
     :return: the variance at time step t as scalar [batch_size, 1, 1, 1]
     """
-    return betas_hat[t].view(-1, 1, 1, 1)
+    return betas_hat[t].reshape(-1, 1, 1, 1)
