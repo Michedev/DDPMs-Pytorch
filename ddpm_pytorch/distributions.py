@@ -14,7 +14,7 @@ def mu_x_t(x_t: torch.Tensor, t: torch.Tensor, model_noise: torch.Tensor, alphas
     :param alphas: sequence of $\alpha$ used for variance scheduling
     :return: the mean of $q(x_t | x_0)$
     """
-    x = 1 / sqrt(alphas[t].reshape(-1, 1, 1, 1)) * (x_t - betas[t].reshape(-1, 1, 1, 1) / sqrt(1 - alphas_hat[t].reshape(-1, 1, 1, 1)) * model_noise)
+    x = 1 / torch.sqrt(alphas[t].reshape(-1, 1, 1, 1)) * (x_t - betas[t].reshape(-1, 1, 1, 1) / torch.sqrt(1 - alphas_hat[t].reshape(-1, 1, 1, 1)) * model_noise)
     # tg.guard(x, "B, C, W, H")
     return x
 
