@@ -29,10 +29,24 @@ def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
     return torch.sin(t / torch.pow(10_000, two_i / dim)).unsqueeze(0)
 
 
-def positional_embedding_matrix(T: int, dim: int) -> torch.FloatTensor:
-    pos = torch.arange(0, T)
-    two_i = 2 * torch.arange(0, dim)
-    return torch.sin(pos / torch.pow(10_000, two_i / dim)).unsqueeze(0)
+def timestep_embedding(timesteps, dim, max_period=10000):
+    """
+    Create sinusoidal timestep embeddings.
+    :param timesteps: a 1-D Tensor of N indices, one per batch element.
+                      These may be fractional.
+    :param dim: the dimension of the output.
+    :param max_period: controls the minimum frequency of the embeddings.
+    :return: an [N x dim] Tensor of positional embeddings.
+    """
+    half = dim // 2
+    freqs = torch.exp(
+        -torch.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
+    ).to(device=timesteps.device)
+    args = timesteps[:, None].float() * freqs[None]
+    embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
+    if dim % 2:
+        embedding = torch.cat([embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
+    return embedding
 
 
 class ResBlockTimeEmbed(nn.Module):
@@ -43,7 +57,10 @@ class ResBlockTimeEmbed(nn.Module):
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding)
         self.groupnorm = nn.GroupNorm(1, out_channels)
         self.relu = nn.ReLU()
-        self.l_embedding = nn.Linear(time_embed_size, out_channels)
+        self.l_embedding = nn.Sequential(
+            nn.SiLU(),
+            nn.Linear(time_embed_size, out_channels)
+        )
         self.out_layer = nn.Sequential(
             nn.GroupNorm(1, out_channels),
             nn.Dropout2d(p_dropout),
@@ -113,11 +130,16 @@ class UNetTimeStep(nn.Module):
         self.dropouts = nn.ModuleList([nn.Dropout2d(p) for p in p_dropouts])
         self.p_dropouts = p_dropouts
         self.self_attn = ImageSelfAttention(channels[2])
+        self.time_embed = nn.Sequential(
+            nn.Linear(self.time_embed_size, self.time_embed_size),
+            nn.SiLU(),
+            nn.Linear(self.time_embed_size, self.time_embed_size),
+        )
 
-    def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.FloatTensor, t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         x_channels = x.shape[1]
         # tg.guard(x, "B, C, W, H")
-        time_embedding = positional_embedding_vector(t, self.time_embed_size)
+        time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
         hs = []
         h = x
         for i, downsample_block in enumerate(self.downsample_blocks):
@@ -178,7 +200,8 @@ class GaussianDDPM(pl.LightningModule):
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         X, y = batch
-        t: torch.Tensor = torch.randint(0, self.T - 1, X.shape[0], device=X.device)  # todo replace this with importance sampling
+        t: torch.Tensor = torch.randint(0, self.T - 1, X.shape[0],
+                                        device=X.device)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(X)
         x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
@@ -200,12 +223,13 @@ class GaussianDDPM(pl.LightningModule):
             gen_images = torchvision.utils.make_grid(gen_images)
             self.logger.experiment.add_image('gen_val_images', gen_images, self.current_epoch)
         X, y = batch
-        t: int = randint(0, self.T - 1)  # todo replace this with importance sampling
+        t: torch.Tensor = torch.randint(0, self.T - 1, X.shape[0],
+                                        device=X.device)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(X)
         x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
-        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t)\
+        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t) \
             .mean(dim=0).sum()
         self.log('loss/val_loss', loss, on_step=True)
         return dict(loss=loss)
