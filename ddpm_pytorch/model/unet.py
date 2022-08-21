@@ -268,6 +268,7 @@ class GaussianDDPM(pl.LightningModule):
         T = T or self.T
         X_noise = torch.randn(batch_size, self.input_channels, self.width, self.height)
         for t in range(T - 1, -1, -1):
+            t = torch.LongTensor([t])
             eps, v = self.denoiser_module(X_noise, t)
             sigma = sigma_x_t(v, t, self.betas_hat, self.betas)
             z = torch.randn_like(X_noise)
