@@ -205,7 +205,7 @@ class GaussianDDPM(pl.LightningModule):
                                         device=X.device)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t]
         eps = torch.randn_like(X)
-        x_t = sqrt(alpha_hat) * X + sqrt(1 - alpha_hat) * eps
+        x_t = torch.sqrt(alpha_hat) * X + torch.sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
         loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(
             dim=0).sum()
@@ -279,5 +279,5 @@ class GaussianDDPM(pl.LightningModule):
             if t == 0:
                 z.fill_(0)
             alpha_t = self.alphas[t].reshape(-1, 1, 1, 1)
-            X_noise = 1 / (sqrt(alpha_t)) * (X_noise - ((1 - alpha_t) / sqrt(1 - self.alphas_hat[t].reshape(-1, 1, 1, 1))) * eps) + sigma * z
+            X_noise = 1 / (torch.sqrt(alpha_t)) * (X_noise - ((1 - alpha_t) / torch.sqrt(1 - self.alphas_hat[t].reshape(-1, 1, 1, 1))) * eps) + sigma * z
         return X_noise
