@@ -28,7 +28,7 @@ def sigma_x_t(v: torch.Tensor, t: torch.Tensor, betas_hat: torch.Tensor, betas: 
     :param betas: sequence of $\beta$ used for variance scheduling
     :return: the estimated variance at time step t
     """
-    x = torch.exp(v * log(betas[t].reshape(-1, 1, 1, 1)) + (1 - v) * log(betas_hat[t].reshape(-1, 1, 1, 1)))
+    x = torch.exp(v * torch.log(betas[t].reshape(-1, 1, 1, 1)) + (1 - v) * torch.log(betas_hat[t].reshape(-1, 1, 1, 1)))
     # tg.guard(x, "B, C, W, H")
     return x
 
