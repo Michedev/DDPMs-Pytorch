@@ -22,13 +22,12 @@ def mu_x_t(x_t: torch.Tensor, t: torch.Tensor, model_noise: torch.Tensor, alphas
 def sigma_x_t(v: torch.Tensor, t: torch.Tensor, betas_hat: torch.Tensor, betas: torch.Tensor) -> torch.Tensor:
     """
     Compute the varaince at time step t as defined in "Improving Denoising Diffusion probabilistic Models", eqn 15 page 4
-    :param v: the neural network "logits" used to compute the variance
+    :param v: the neural network "logits" used to compute the variance [BS, C, W, H]
     :param t: the target time step
     :param betas_hat: sequence of $\hat{\beta}$ used for variance scheduling
     :param betas: sequence of $\beta$ used for variance scheduling
     :return: the estimated variance at time step t
     """
-    v = v.reshape(-1, 1, 1, 1)
     x = torch.exp(v * log(betas[t].reshape(-1, 1, 1, 1)) + (1 - v) * log(betas_hat[t].reshape(-1, 1, 1, 1)))
     # tg.guard(x, "B, C, W, H")
     return x
