@@ -1,3 +1,4 @@
+import math
 from math import sqrt, log
 from random import randint
 from typing import Dict, List, Tuple, Optional
@@ -29,7 +30,7 @@ def positional_embedding_vector(t: int, dim: int) -> torch.FloatTensor:
     return torch.sin(t / torch.pow(10_000, two_i / dim)).unsqueeze(0)
 
 
-def timestep_embedding(timesteps, dim, max_period=10000):
+def timestep_embedding(timesteps: torch.Tensor, dim: int, max_period=10000):
     """
     Create sinusoidal timestep embeddings.
     :param timesteps: a 1-D Tensor of N indices, one per batch element.
@@ -40,7 +41,7 @@ def timestep_embedding(timesteps, dim, max_period=10000):
     """
     half = dim // 2
     freqs = torch.exp(
-        -torch.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
+        -math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
     ).to(device=timesteps.device)
     args = timesteps[:, None].float() * freqs[None]
     embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
