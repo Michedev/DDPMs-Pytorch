@@ -274,6 +274,6 @@ class GaussianDDPM(pl.LightningModule):
             z = torch.randn_like(X_noise)
             if t == 0:
                 z.fill_(0)
-            alpha_t = self.alphas[t]
-            X_noise = 1 / (sqrt(alpha_t)) * (X_noise - ((1 - alpha_t) / sqrt(1 - self.alphas_hat[t])) * eps) + sigma * z
+            alpha_t = self.alphas[t].reshape(-1, 1, 1, 1)
+            X_noise = 1 / (sqrt(alpha_t)) * (X_noise - ((1 - alpha_t) / sqrt(1 - self.alphas_hat[t].reshape(-1, 1, 1, 1))) * eps) + sigma * z
         return X_noise
