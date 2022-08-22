@@ -47,7 +47,7 @@ def timestep_embedding(timesteps: torch.Tensor, dim: int, max_period=10000):
     embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
     if dim % 2:
         embedding = torch.cat([embedding, torch.zeros_like(embedding[:, :1])], dim=-1)
-    return embedding
+    return embedding.to(timesteps.device)
 
 
 class ResBlockTimeEmbed(nn.Module):
@@ -186,10 +186,10 @@ class GaussianDDPM(pl.LightningModule):
 
         self.var_scheduler = variance_scheduler
         self.lambda_variational = lambda_variational
-        self.alphas_hat: torch.FloatTensor = self.var_scheduler.get_alpha_hat()
-        self.alphas: torch.FloatTensor = self.var_scheduler.get_alpha_noise()
-        self.betas = self.var_scheduler.get_betas()
-        self.betas_hat = self.var_scheduler.get_betas_hat()
+        self.alphas_hat: torch.FloatTensor = self.var_scheduler.get_alpha_hat().to(self.device)
+        self.alphas: torch.FloatTensor = self.var_scheduler.get_alpha_noise().to(self.device)
+        self.betas = self.var_scheduler.get_betas().to(self.device)
+        self.betas_hat = self.var_scheduler.get_betas_hat().to(self.device)
         self.mse = nn.MSELoss()
         self.width = width
         self.height = height
@@ -270,9 +270,15 @@ class GaussianDDPM(pl.LightningModule):
     def generate(self, batch_size: int = None, T: Optional[int] = None):
         batch_size = batch_size or 1
         T = T or self.T
-        X_noise = torch.randn(batch_size, self.input_channels, self.width, self.height)
+        self.alphas_hat: torch.FloatTensor = self.alphas_hat.to(self.device)
+        self.alphas: torch.FloatTensor = self.alphas.to(self.device)
+        self.betas = self.betas.to(self.device)
+        self.betas_hat = self.betas_hat.to(self.device)
+
+        X_noise = torch.randn(batch_size, self.input_channels,
+                              self.width, self.height, device=self.device)
         for t in range(T - 1, -1, -1):
-            t = torch.LongTensor([t])
+            t = torch.LongTensor([t]).to(self.device)
             eps, v = self.denoiser_module(X_noise, t)
             sigma = sigma_x_t(v, t, self.betas_hat, self.betas)
             z = torch.randn_like(X_noise)
