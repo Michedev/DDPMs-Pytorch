@@ -17,6 +17,8 @@ accelerator: null
 devices: null
 gradient_clip_val: 10
 gradient_clip_algorithm: norm
+ema: true
+ema_decay: 0.99
 
 hydra:
   run:
