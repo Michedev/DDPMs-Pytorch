@@ -35,4 +35,4 @@ class EMA(pl.Callback):
     ) -> None:
         for n, p in pl_module.named_parameters():
             self.dict_params[n] = self.dict_params[n] * (1.0 - self.decay_factor) + p * self.decay_factor
-            p.fill_(self.dict_params[n])
+            p[:] = self.dict_params[n][:]
