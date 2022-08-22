@@ -5,6 +5,14 @@ import torch
 
 
 class EMA(pl.Callback):
+    """
+    Exponential Moving Average
+    Let \beta the smoothing parameter, p the current parameter value and v the accumulated value, the EMA is calculated
+    as follows
+
+    v_t = \beta * p_{t-1} + (1 - \beta) * v_{t-1}
+    p_t = v_t
+    """
 
     def __init__(self, decay_factor: float):
         assert 0.0 <= decay_factor <= 1.0
@@ -27,4 +35,4 @@ class EMA(pl.Callback):
     ) -> None:
         for n, p in pl_module.named_parameters():
             self.dict_params[n] = self.dict_params[n] * (1.0 - self.decay_factor) + p * self.decay_factor
-            torch.fill_(p, self.dict_params[n])
+            p.fill_(self.dict_params[n])
