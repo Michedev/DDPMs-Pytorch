@@ -181,7 +181,6 @@ class GaussianDDPM(pl.LightningModule):
         :param vlb: true to include the variational lower bound into the loss function
         """
         super().__init__()
-        self.save_hyperparameters()
         self.input_channels = input_channels
         self.denoiser_module = denoiser_module
         self.T = T
