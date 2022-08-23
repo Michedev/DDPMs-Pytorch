@@ -168,7 +168,7 @@ class GaussianDDPM(pl.LightningModule):
 
     def __init__(self, denoiser_module: nn.Module, T: int,
                  variance_scheduler: Scheduler, lambda_variational: float, width: int,
-                 height: int, input_channels: int, log_loss: int):
+                 height: int, input_channels: int, log_loss: int, vlb: bool):
         """
         :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, t)
         :param T: the amount of noising steps
@@ -178,8 +178,10 @@ class GaussianDDPM(pl.LightningModule):
         :param height: image height
         :param input_channels: image input channels
         :param log_loss: frequency of logging loss function during training
+        :param vlb: true to include the variational lower bound into the loss function
         """
         super().__init__()
+        self.save_hyperparameters()
         self.input_channels = input_channels
         self.denoiser_module = denoiser_module
         self.T = T
@@ -194,6 +196,7 @@ class GaussianDDPM(pl.LightningModule):
         self.width = width
         self.height = height
         self.log_loss = log_loss
+        self.vlb = vlb
         self.iteration = 0
 
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -207,10 +210,17 @@ class GaussianDDPM(pl.LightningModule):
         eps = torch.randn_like(X)
         x_t = torch.sqrt(alpha_hat) * X + torch.sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
-        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(
-            dim=0).sum()
+        loss = 0.0
+        noise_loss = self.mse(eps, pred_eps)
+        loss = loss + noise_loss
+        if self.vlb:
+            loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
+            loss = loss + loss_vlb
         if (self.iteration % self.log_loss) == 0:
             self.log('loss/train_loss', loss, on_step=True)
+            if self.vlb:
+                self.log('loss/train_loss_noise', noise_loss, on_step=True)
+                self.log('loss/train_loss_vlb', loss_vlb, on_step=True)
             norm_params = sum(
                 [torch.norm(p.grad) for p in self.parameters() if
                  hasattr(p, 'grad') and p.grad is not None])

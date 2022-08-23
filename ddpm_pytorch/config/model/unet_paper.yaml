@@ -14,3 +14,4 @@ width: ${dataset.width}
 height: ${dataset.height}
 log_loss: 1_000
 input_channels: ${dataset.channels}
+vlb: true
