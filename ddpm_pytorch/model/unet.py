@@ -51,10 +51,10 @@ def timestep_embedding(timesteps: torch.Tensor, dim: int, max_period=10000):
 
 
 @torch.no_grad()
-def init_zero_(module: nn.Module):
+def init_zero(module: nn.Module) -> nn.Module:
     for p in module.parameters():
         torch.nn.init.zeros_(p)
-
+    return module
 
 class ResBlockTimeEmbed(nn.Module):
 
@@ -74,7 +74,7 @@ class ResBlockTimeEmbed(nn.Module):
             nn.GroupNorm(1, out_channels),
             nn.SiLU(),
             nn.Dropout(p_dropout),
-            init_zero_(nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding)),
+            init_zero(nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding)),
         )
         self.skip_connection = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
 
