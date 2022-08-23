@@ -50,13 +50,21 @@ def timestep_embedding(timesteps: torch.Tensor, dim: int, max_period=10000):
     return embedding.to(timesteps.device)
 
 
+@torch.no_grad()
+def init_zero_(module: nn.Module):
+    for p in module.parameters():
+        torch.nn.init.zeros_(p)
+
+
 class ResBlockTimeEmbed(nn.Module):
 
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int,
                  time_embed_size: int, p_dropout: float):
         super().__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding)
-        self.groupnorm = nn.GroupNorm(1, out_channels)
+        self.conv = nn.Sequential(
+            nn.GroupNorm(1, in_channels),
+            nn.SiLU(),
+            nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding))
         self.relu = nn.ReLU()
         self.l_embedding = nn.Sequential(
             nn.SiLU(),
@@ -64,17 +72,18 @@ class ResBlockTimeEmbed(nn.Module):
         )
         self.out_layer = nn.Sequential(
             nn.GroupNorm(1, out_channels),
-            nn.Dropout2d(p_dropout),
-            nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
-            nn.ReLU())
+            nn.SiLU(),
+            nn.Dropout(p_dropout),
+            init_zero_(nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding)),
+        )
+        self.skip_connection = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
 
     def forward(self, x, time_embed):
-        x = self.conv(x)
-        h = self.groupnorm(x)
+        h = self.conv(x)
         time_embed = self.l_embedding(time_embed)
         time_embed = time_embed.view(time_embed.shape[0], time_embed.shape[1], 1, 1)
         h = h + time_embed
-        return self.out_layer(h) + x
+        return self.out_layer(h) + self.skip_connection(x)
 
 
 class ImageSelfAttention(nn.Module):
