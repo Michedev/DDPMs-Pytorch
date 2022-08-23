@@ -283,7 +283,7 @@ class GaussianDDPM(pl.LightningModule):
         return vlb
 
     def configure_optimizers(self):
-        return torch.optim.Adam(params=self.parameters(), lr=1e-4)
+        return torch.optim.Adam(params=self.parameters())
 
     def generate(self, batch_size: int = None, T: Optional[int] = None):
         batch_size = batch_size or 1
