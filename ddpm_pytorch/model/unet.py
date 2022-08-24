@@ -212,6 +212,8 @@ class GaussianDDPM(pl.LightningModule):
 
     def training_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         X, y = batch
+        with torch.no_grad():
+            X = X * 2 - 1  # map image values from [0, 1] to [-1, 1]
         t: torch.Tensor = torch.randint(0, self.T - 1, (X.shape[0],),
                                         device=X.device)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t].reshape(-1, 1, 1, 1)
@@ -242,6 +244,8 @@ class GaussianDDPM(pl.LightningModule):
             gen_images = torchvision.utils.make_grid(gen_images)
             self.logger.experiment.add_image('gen_val_images', gen_images, self.current_epoch)
         X, y = batch
+        with torch.no_grad():
+            X = X * 2 - 1
         t: torch.Tensor = torch.randint(0, self.T - 1, (X.shape[0],),
                                         device=X.device)  # todo replace this with importance sampling
         alpha_hat = self.alphas_hat[t].reshape(-1, 1, 1, 1)
@@ -310,4 +314,5 @@ class GaussianDDPM(pl.LightningModule):
                 z.fill_(0)
             alpha_t = self.alphas[t].reshape(-1, 1, 1, 1)
             X_noise = 1 / (torch.sqrt(alpha_t)) * (X_noise - ((1 - alpha_t) / torch.sqrt(1 - self.alphas_hat[t].reshape(-1, 1, 1, 1))) * eps) + sigma * z
+        X_noise = (X_noise + 1) / 2
         return X_noise
