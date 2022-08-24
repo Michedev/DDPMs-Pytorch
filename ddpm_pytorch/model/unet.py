@@ -248,8 +248,14 @@ class GaussianDDPM(pl.LightningModule):
         eps = torch.randn_like(X)
         x_t = torch.sqrt(alpha_hat) * X + torch.sqrt(1 - alpha_hat) * eps
         pred_eps, v = self(x_t, t)
-        loss = self.mse(eps, pred_eps) + self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t) \
-            .mean(dim=0).sum()
+        loss = self.mse(eps, pred_eps)
+        if self.vlb:
+            eps_loss = loss
+            self.log('loss/val_eps_loss', eps_loss, on_step=True)
+            loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t) \
+                .mean(dim=0).sum()
+            self.log('loss/val_vlb_loss', loss_vlb, on_step=True)
+            loss = loss + loss_vlb
         self.log('loss/val_loss', loss, on_step=True)
         return dict(loss=loss)
 
