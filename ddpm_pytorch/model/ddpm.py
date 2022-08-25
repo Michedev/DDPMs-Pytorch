@@ -1,5 +1,5 @@
 from math import sqrt
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union, List
 
 import pytorch_lightning as pl
 import torch
@@ -136,12 +136,14 @@ class GaussianDDPM(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(params=self.parameters())
 
-    def generate(self, batch_size: Optional[int] = None, T: Optional[int] = None) -> torch.Tensor:
+    def generate(self, batch_size: Optional[int] = None, T: Optional[int] = None,
+                 get_intermediate_steps: bool = False) -> Union[torch.Tensor, List[torch.Tensor]]:
         """
         Generate a batch of images via denoising diffusion probabilistic model
         :param batch_size: batch size of generated images. The default value is 1
         :param T: number of diffusion steps to generated images. The default value is the training diffusion steps
-        :return: The tensor [bs, c, w, h] of generated images
+        :param get_intermediate_steps: return all the denoising steps instead of the final step output
+        :return: The tensor [bs, c, w, h] of generated images or a list of tensors [bs, c, w, h] if get_intermediate_steps=True
         """
         batch_size = batch_size or 1
         T = T or self.T
@@ -149,10 +151,13 @@ class GaussianDDPM(pl.LightningModule):
         self.alphas: torch.FloatTensor = self.alphas.to(self.device)
         self.betas = self.betas.to(self.device)
         self.betas_hat = self.betas_hat.to(self.device)
-
+        if get_intermediate_steps:
+            steps = []
         X_noise = torch.randn(batch_size, self.input_channels,   # start with random noise sampled from N(0, 1)
                               self.width, self.height, device=self.device)
         for t in range(T - 1, -1, -1):
+            if get_intermediate_steps:
+                steps.append(X_noise)
             t = torch.LongTensor([t]).to(self.device)
             eps, v = self.denoiser_module(X_noise, t)  # predict via nn the noise
             # if variational lower bound is present on the loss function hence v (the logit of variance) is trained
@@ -167,4 +172,7 @@ class GaussianDDPM(pl.LightningModule):
                       sigma * z  # denoise step from x_t to x_{t-1} following the DDPM paper. Differently from the
                                  # original paper, the variance is estimated via nn instead of be fixed, as in Improved DDPM paper
         X_noise = (X_noise + 1) / 2  # rescale from [-1, 1] to [0, 1]
+        if get_intermediate_steps:
+            steps.append(X_noise)
+            return steps
         return X_noise
