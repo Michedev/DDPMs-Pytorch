@@ -1,4 +1,3 @@
 _target_: ddpm_pytorch.variance_scheduler.cosine.CosineScheduler
-beta_start: 0.000025
-beta_end: 0.005
+s: 0.0008
 T: ${noise_steps}
