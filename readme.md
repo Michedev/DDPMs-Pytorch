@@ -30,7 +30,7 @@ Under _ddpm_pytorch/config_ there are several yaml files containing the training
       - optional model_scheduler: ${model}-${scheduler} # set particular hyper parameters for specific couples (model, scheduler)
 
     batch_size: 128 # train batch size
-    noise_steps: 4_000  # noising steps; the T in "_Improved Denoising Diffusion Probabilistic Models_" and "_Denoising Diffusion Probabilistic Models_"
+    noise_steps: 4_000  # noising steps; the T in "Improved Denoising Diffusion Probabilistic Models" and "Denoising Diffusion Probabilistic Models"
     accelerator: null  # training hardware; for more details see pytorch lightning
     devices: null  # training devices to use; for more details see pytorch lightning
     gradient_clip_val: 0.0  # 0.0 means gradient clip disabled
@@ -41,3 +41,9 @@ Under _ddpm_pytorch/config_ there are several yaml files containing the training
     hydra:
       run:
         dir: saved_models/${now:%Y_%m_%d_%H_%M_%S}
+
+### Examples of custom training
+
+__Disable the variational lower bound__, hence training like in "_Denoising Diffusion Probabilistic Models_" with __linear__ scheduler and in __GPU__
+
+      poetry run python ddpm_pytorch/train.py scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
