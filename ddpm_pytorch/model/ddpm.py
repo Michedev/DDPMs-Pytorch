@@ -11,6 +11,10 @@ from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
 
 class GaussianDDPM(pl.LightningModule):
+    """
+    Gaussian De-noising Diffusion Probabilistic Model
+    This class implements
+    """
 
     def __init__(self, denoiser_module: nn.Module, T: int,
                  variance_scheduler: Scheduler, lambda_variational: float, width: int,
