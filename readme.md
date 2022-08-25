@@ -7,7 +7,7 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_" 
 
 # How to train
 
-1. Install Poetry 
+1. Install [Poetry](https://python-poetry.org/) 
 
 2. Install all the dependencies with the command
 
