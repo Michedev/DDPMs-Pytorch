@@ -2,20 +2,14 @@ defaults:
   - model: unet_paper
   - scheduler: cosine
   - dataset: mnist
-  - optimizer: adam_paper
   - optional model_dataset: ${model}-${dataset}
   - optional model_scheduler: ${model}-${scheduler}
 
 batch_size: 128
-device: cuda:0
-steps: -1
-early_stop: true
-steps_patience: 10_000
 noise_steps: 4_000
-steps_checkpoint: 5_000
 accelerator: null
 devices: null
-gradient_clip_val: 10
+gradient_clip_val: 0.0
 gradient_clip_algorithm: norm
 ema: true
 ema_decay: 0.99
