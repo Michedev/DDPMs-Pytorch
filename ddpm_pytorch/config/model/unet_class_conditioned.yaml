@@ -16,3 +16,5 @@ logging_freq: 1_000
 input_channels: ${dataset.channels}
 num_classes: ${dataset.num_classes}
 v: 0.2
+w: 0.3
+p_uncond: 0.1
