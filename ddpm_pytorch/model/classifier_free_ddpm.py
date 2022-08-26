@@ -64,12 +64,12 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         if batch_idx == 0:
             batch_size = 32
-            for c in range(self.num_classes):
+            for i_c in range(self.num_classes):
                 c = torch.zeros(batch_size, self.num_classes)
-                c[:, c] = 1
+                c[:, i_c] = 1
                 x_c = self.generate(batch_size, c)
                 x_c = torchvision.utils.make_grid(x_c)
-                self.logger.experiment.add_image(f'epoch_gen_val_images_class_{c}', x_c, self.current_epoch)
+                self.logger.experiment.add_image(f'epoch_gen_val_images_class_{i_c}', x_c, self.current_epoch)
         return self._step(batch, batch_idx, 'valid')
 
     def _step(self, batch, batch_idx, dataset: Literal['train', 'valid']) -> torch.Tensor:
