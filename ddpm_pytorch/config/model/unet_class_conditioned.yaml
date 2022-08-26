@@ -17,3 +17,4 @@ logging_freq: 1_000
 input_channels: ${dataset.channels}
 vlb: true
 num_classes: ${dataset.num_classes}
+v: 0.2
