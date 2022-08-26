@@ -1,0 +1,5 @@
+# @package _global_
+
+model:
+  denoiser_module:
+    channels: [1, 32, 64, 64, 96]
