@@ -10,11 +10,9 @@ denoiser_module:
   downsample: true
   num_classes: ${dataset.num_classes}
 T: ${noise_steps}
-lambda_variational: 0.0001
 width: ${dataset.width}
 height: ${dataset.height}
 logging_freq: 1_000
 input_channels: ${dataset.channels}
-vlb: true
 num_classes: ${dataset.num_classes}
 v: 0.2
