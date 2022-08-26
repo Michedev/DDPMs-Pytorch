@@ -3,6 +3,7 @@ from typing import Literal, List, Union, Optional
 
 import pytorch_lightning as pl
 import torch
+import torchvision
 from torch import nn
 from torch.nn.functional import one_hot
 
@@ -61,6 +62,14 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         return self._step(batch, batch_idx, 'train')
 
     def validation_step(self, batch, batch_idx):
+        if batch_idx == 0:
+            batch_size = 32
+            for c in range(self.num_classes):
+                c = torch.zeros(batch_size, self.num_classes)
+                c[:, c] = 1
+                x_c = self.generate(batch_size, c)
+                x_c = torchvision.utils.make_grid(x_c)
+                self.logger.experiment.add_image(f'epoch_gen_val_images_class_{c}', x_c, self.current_epoch)
         return self._step(batch, batch_idx, 'valid')
 
     def _step(self, batch, batch_idx, dataset: Literal['train', 'valid']) -> torch.Tensor:
