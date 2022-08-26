@@ -91,7 +91,10 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
             nn.init.zeros_(self.linear_map_class.bias)
 
     def forward(self, x, time_embed, c):
-        x = x + self.linear_map_class(c)
+        emb_c = self.linear_map_class(c)
+        emb_c = emb_c.view(*emb_c.shape, 1, 1)
+        # tg.guard(emb_c, "B, C, 1, 1")
+        x = x + emb_c
         return super().forward(x, time_embed)
 
 
@@ -155,6 +158,7 @@ class UNetTimeStep(nn.Module):
         x_channels = x.shape[1]
         # tg.guard(x, "B, C, W, H")
         time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
+        # tg.guard(time_embedding, "B, TE")
         hs = []
         h = x
         for i, downsample_block in enumerate(self.downsample_blocks):
@@ -219,6 +223,7 @@ class UNetTimeStepClassConditioned(nn.Module):
         # tg.guard(x, "B, C, W, H")
         # tg.guard(c, "B, NUMCLASSES")
         time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
+        # tg.guard(time_embedding, "B, TE")
         hs = []
         h = x
         for i, downsample_block in enumerate(self.downsample_blocks):

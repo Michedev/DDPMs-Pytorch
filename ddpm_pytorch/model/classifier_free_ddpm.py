@@ -70,9 +70,10 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         if is_class_uncond:
             with torch.no_grad():
                 y.fill_(0)  # null class
-        t = torch.randint(0, self.T - 1, (X.shape[0],), device=X.device).reshape(-1, 1, 1, 1)
+        t = torch.randint(0, self.T - 1, (X.shape[0],), device=X.device)
+        t_expanded = t.reshape(-1, 1, 1, 1)
         eps = torch.randn_like(X)
-        x_t = X * self._alpha_t(t) + self._sigma_t(t)  * eps # go from x_0 to x_t with the formula
+        x_t = X * self._alpha_t(t_expanded) + self._sigma_t(t_expanded) * eps # go from x_0 to x_t with the formula
         pred_eps = self(x_t, t, y)
         loss = self.mse(eps, pred_eps)
         if dataset == 'train' or (self.iteration % self.logging_freq) == 0:
@@ -100,16 +101,17 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         for t in range(T - 1, -1, -1):
             if get_intermediate_steps:
                 steps.append(z_t)
-            t = torch.LongTensor([t] * batch_size).view(-1, 1, 1, 1).to(self.device)
+            t = torch.LongTensor([t] * batch_size).to(self.device)
+            t_expanded = t.view(-1, 1, 1, 1)
             if is_c_none:
                 eps = self(z_t, t, c)  # predict via nn the noise
             else:
-                eps = (1 + self.w) * self(z_t, t ,c) - self.w * self(z_t, t, c)
-            x_t = (z_t - self._sigma_t(t) * eps) / self._alpha_t(t)
+                eps = (1 + self.w) * self(z_t, t,c) - self.w * self(z_t, t, c)
+            x_t = (z_t - self._sigma_t(t_expanded) * eps) / self._alpha_t(t_expanded)
             if t > 0:
-                z_t = self._mu_t1_t_z_x(t, t-1, z_t, x_t) + \
-                      self._sigma_t1_t_z_x(t, t-1) ** (1 - self.v) * \
-                      self._sigma_t1_t_z_x(t, t-1) ** self.v * torch.randn_like(x_t)
+                z_t = self._mu_t1_t_z_x(t_expanded, t_expanded-1, z_t, x_t) + \
+                      self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** (1 - self.v) * \
+                      self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** self.v * torch.randn_like(x_t)
             else:
                 z_t = x_t
         if get_intermediate_steps:
