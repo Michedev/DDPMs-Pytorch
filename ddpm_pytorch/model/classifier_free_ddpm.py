@@ -65,7 +65,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         if batch_idx == 0:
             batch_size = 32
             for i_c in range(self.num_classes):
-                c = torch.zeros(batch_size, self.num_classes)
+                c = torch.zeros(batch_size, self.num_classes, device=self.device)
                 c[:, i_c] = 1
                 x_c = self.generate(batch_size, c)
                 x_c = torchvision.utils.make_grid(x_c)
