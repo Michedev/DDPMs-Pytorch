@@ -4,6 +4,7 @@ from typing import Literal, List, Union, Optional
 import pytorch_lightning as pl
 import torch
 from torch import nn
+from torch.nn.functional import one_hot
 
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
@@ -64,6 +65,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
 
     def _step(self, batch, batch_idx, dataset: Literal['train', 'valid']) -> torch.Tensor:
         X, y = batch
+        y = one_hot(y, self.num_classes)
         is_class_uncond = random() < self.p_uncond
         if is_class_uncond:
             with torch.no_grad():
