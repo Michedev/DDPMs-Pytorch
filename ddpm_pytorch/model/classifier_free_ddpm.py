@@ -77,6 +77,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         pred_eps = self(x_t, t, y)
         loss = self.mse(eps, pred_eps)
         if dataset == 'valid' or (self.iteration % self.logging_freq) == 0:
+            self.log(f'loss/{dataset}_loss', loss, on_step=True)
             self.log(f'loss/{dataset}_loss_{"uncond" if is_class_uncond else "cond"}', loss, on_step=True)
         self.iteration += 1
         return loss

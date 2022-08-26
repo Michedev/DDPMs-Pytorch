@@ -23,7 +23,7 @@ def train(config: DictConfig):
     pin_memory = 'gpu' in config.accelerator
     train_dl = DataLoader(train_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
     val_dl = DataLoader(val_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
-    ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-val_loss={loss/val_loss}', monitor='loss/val_loss',
+    ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-valid_loss={loss/valid_loss}', monitor='loss/valid_loss',
                                     auto_insert_metric_name=False)
     callbacks = [ckpt_callback]
     if config.ema:
