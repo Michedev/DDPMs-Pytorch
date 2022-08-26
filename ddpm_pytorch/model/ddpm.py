@@ -18,7 +18,7 @@ class GaussianDDPM(pl.LightningModule):
 
     def __init__(self, denoiser_module: nn.Module, T: int,
                  variance_scheduler: Scheduler, lambda_variational: float, width: int,
-                 height: int, input_channels: int, log_loss: int, vlb: bool):
+                 height: int, input_channels: int, logging_freq: int, vlb: bool):
         """
         :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, t)
         :param T: the amount of noising steps
@@ -27,7 +27,7 @@ class GaussianDDPM(pl.LightningModule):
         :param width: image width
         :param height: image height
         :param input_channels: image input channels
-        :param log_loss: frequency of logging loss function during training
+        :param logging_freq: frequency of logging loss function during training
         :param vlb: true to include the variational lower bound into the loss function
         """
         super().__init__()
@@ -44,7 +44,7 @@ class GaussianDDPM(pl.LightningModule):
         self.mse = nn.MSELoss()
         self.width = width
         self.height = height
-        self.log_loss = log_loss
+        self.logging_freq = logging_freq
         self.vlb = vlb
         self.iteration = 0
 
@@ -67,7 +67,7 @@ class GaussianDDPM(pl.LightningModule):
         if self.vlb:
             loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
             loss = loss + loss_vlb
-        if (self.iteration % self.log_loss) == 0:
+        if (self.iteration % self.logging_freq) == 0:
             self.log('loss/train_loss', loss, on_step=True)
             if self.vlb:
                 self.log('loss/train_loss_noise', noise_loss, on_step=True)
@@ -129,7 +129,7 @@ class GaussianDDPM(pl.LightningModule):
         q = torch.distributions.Normal(mu_hat_xt_x0(x_t, x_0, t, self.alphas_hat, self.alphas, self.betas),
                                        sigma_hat_xt_x0(t, self.betas_hat))  # q(x_{t-1} | x_t, x_0)
         p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas).detach(),
-                                       sigma_x_t(v, t, self.betas_hat, self.betas)) # p(x_t | x_{t-1})
+                                       sigma_x_t(v, t, self.betas_hat, self.betas))  # p(x_t | x_{t-1})
         vlb += torch.distributions.kl_divergence(q, p) * (~t_eq_last).float() * (~t_eq_0).float()
         return vlb
 
@@ -147,13 +147,9 @@ class GaussianDDPM(pl.LightningModule):
         """
         batch_size = batch_size or 1
         T = T or self.T
-        self.alphas_hat: torch.FloatTensor = self.alphas_hat.to(self.device)
-        self.alphas: torch.FloatTensor = self.alphas.to(self.device)
-        self.betas = self.betas.to(self.device)
-        self.betas_hat = self.betas_hat.to(self.device)
         if get_intermediate_steps:
             steps = []
-        X_noise = torch.randn(batch_size, self.input_channels,   # start with random noise sampled from N(0, 1)
+        X_noise = torch.randn(batch_size, self.input_channels,  # start with random noise sampled from N(0, 1)
                               self.width, self.height, device=self.device)
         for t in range(T - 1, -1, -1):
             if get_intermediate_steps:
@@ -170,9 +166,15 @@ class GaussianDDPM(pl.LightningModule):
             X_noise = 1 / (torch.sqrt(alpha_t)) * \
                       (X_noise - ((1 - alpha_t) / torch.sqrt(1 - self.alphas_hat[t].reshape(-1, 1, 1, 1))) * eps) + \
                       sigma * z  # denoise step from x_t to x_{t-1} following the DDPM paper. Differently from the
-                                 # original paper, the variance is estimated via nn instead of be fixed, as in Improved DDPM paper
+            # original paper, the variance is estimated via nn instead of be fixed, as in Improved DDPM paper
         X_noise = (X_noise + 1) / 2  # rescale from [-1, 1] to [0, 1]
         if get_intermediate_steps:
             steps.append(X_noise)
             return steps
         return X_noise
+
+    def on_fit_start(self) -> None:
+        self.alphas_hat: torch.FloatTensor = self.alphas_hat.to(self.device)
+        self.alphas: torch.FloatTensor = self.alphas.to(self.device)
+        self.betas = self.betas.to(self.device)
+        self.betas_hat = self.betas_hat.to(self.device)
