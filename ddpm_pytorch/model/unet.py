@@ -139,7 +139,7 @@ class UNetTimeStep(nn.Module):
         self.downsample_op = nn.MaxPool2d(kernel_size=2)
         self.middle_block = ResBlockTimeEmbed(channels[-1], channels[-1], kernel_sizes[-1], strides[-1],
                                               paddings[-1], time_embed_size, p_dropouts[-1])
-        channels[0] += 1  # because the output is the image plus the estimated variance coefficients
+        channels[0] *= 2 # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
             ResBlockTimeEmbed((2 if i != 0 else 1) * channels[-i - 1], channels[-i - 2], kernel_sizes[-i - 1],
                               strides[-i - 1],
@@ -203,7 +203,6 @@ class UNetTimeStepClassConditioned(nn.Module):
         self.downsample_op = nn.MaxPool2d(kernel_size=2)
         self.middle_block = ResBlockTimeEmbedClassConditioned(channels[-1], channels[-1], kernel_sizes[-1], strides[-1],
                                                               paddings[-1], time_embed_size, p_dropouts[-1], num_classes)
-        channels[0] += 1  # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
             ResBlockTimeEmbedClassConditioned((2 if i != 0 else 1) * channels[-i - 1], channels[-i - 2], kernel_sizes[-i - 1],
                                               strides[-i - 1],
@@ -241,7 +240,7 @@ class UNetTimeStepClassConditioned(nn.Module):
             h = upsample_block(h, time_embedding, c)
             if self.use_downsample and (i != (len(self.upsample_blocks) - 1)):
                 h = F.interpolate(h, size=hs[-i - 1].shape[-1], mode='nearest')
-        x_recon, v = h[:, :x_channels], h[:, x_channels:]
+        x_recon = h
         # tg.guard(x_recon, "B, C, W, H")
         # tg.guard(v, "B, C, W, H")
-        return x_recon, v
+        return x_recon
