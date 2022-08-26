@@ -20,7 +20,7 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
     def forward(self, x, time_embed, c):
         emb_c = self.linear_map_class(c)
         emb_c = emb_c.view(*emb_c.shape, 1, 1)
-        emb_c.expand(x.shape[0], -1, x.shape[-2], x.shape[-1])
+        emb_c = emb_c.expand(x.shape[0], -1, x.shape[-2], x.shape[-1])
         # tg.guard(emb_c, "B, C, W, H")
         x = torch.cat([x, emb_c], dim=1)
         return super().forward(x, time_embed)
