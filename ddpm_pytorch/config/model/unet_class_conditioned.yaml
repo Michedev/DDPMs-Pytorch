@@ -9,6 +9,7 @@ denoiser_module:
   time_embed_size: 100  #did not found this hp on the paper
   downsample: true
   num_classes: ${dataset.num_classes}
+  class_embed_size: 10
 T: ${noise_steps}
 width: ${dataset.width}
 height: ${dataset.height}
