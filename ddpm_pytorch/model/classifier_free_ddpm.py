@@ -118,7 +118,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             else:
                 eps = (1 + self.w) * self(z_t, t,c) - self.w * self(z_t, t, c)
             x_t = (z_t - self._sigma_t(t_expanded) * eps) / self._alpha_t(t_expanded)
-            if t > 0:
+            if torch.any(t > 0):
                 z_t = self._mu_t1_t_z_x(t_expanded, t_expanded-1, z_t, x_t) + \
                       self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** (1 - self.v) * \
                       self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** self.v * torch.randn_like(x_t)
