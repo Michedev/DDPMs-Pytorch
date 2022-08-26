@@ -65,7 +65,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
 
     def _step(self, batch, batch_idx, dataset: Literal['train', 'valid']) -> torch.Tensor:
         X, y = batch
-        y = one_hot(y, self.num_classes)
+        y = one_hot(y, self.num_classes).float()
         is_class_uncond = random() < self.p_uncond
         if is_class_uncond:
             with torch.no_grad():
