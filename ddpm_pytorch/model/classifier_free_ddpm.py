@@ -27,7 +27,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         :param input_channels: image input channels
         :param num_classes: number of classes
         :param logging_freq: frequency of logging loss function during training
-        :param v:
+        :param v: generation variance parameter
         """
         assert 0.0 <= v <= 1.0, f'0.0 <= {v} <= 1.0'
         assert 0.0 <= w <= 1.0, f'0.0 <= {w} <= 1.0'
