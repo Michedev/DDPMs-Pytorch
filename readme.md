@@ -1,6 +1,7 @@
 # DDPM Pytorch
 
-Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_" and "_Denoising Diffusion Probabilistic Models_"
+Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_", 
+"_Denoising Diffusion Probabilistic Models_" and "_Classifier-free Diffusion Guidance_"
 
 ![](https://hojonathanho.github.io/diffusion/assets/img/pgm_diagram_xarrow.png)
 
@@ -47,3 +48,7 @@ Under _ddpm_pytorch/config_ there are several yaml files containing the training
 __Disable the variational lower bound__, hence training like in "_Denoising Diffusion Probabilistic Models_" with __linear__ scheduler and in __GPU__
 
       poetry run python ddpm_pytorch/train.py scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
+
+Use the labels as __Diffusion Guidance__, as in "_Classifier-free Diffusion Guidance_"
+
+      poetry run python ddpm_pytorch/train.py model=unet_class_conditioned noise_steps=1000

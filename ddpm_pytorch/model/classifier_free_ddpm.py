@@ -116,7 +116,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             if is_c_none:
                 eps = self(z_t, t, c)  # predict via nn the noise
             else:
-                eps = (1 + self.w) * self(z_t, t,c) - self.w * self(z_t, t, c)
+                eps = (1 + self.w) * self(z_t, t,  c) - self.w * self(z_t, t, c * 0)
             x_t = (z_t - self._sigma_t(t_expanded) * eps) / self._alpha_t(t_expanded)
             if torch.any(t > 0):
                 z_t = self._mu_t1_t_z_x(t_expanded, t_expanded-1, z_t, x_t) + \

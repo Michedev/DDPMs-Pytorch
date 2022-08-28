@@ -64,7 +64,6 @@ class UNetTimeStepClassConditioned(nn.Module):
         )
         self.linear_map_class = nn.Linear(num_classes, class_embed_size)
 
-
     def forward(self, x: torch.FloatTensor, t: torch.Tensor, c: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         x_channels = x.shape[1]
         # tg.guard(x, "B, C, W, H")
