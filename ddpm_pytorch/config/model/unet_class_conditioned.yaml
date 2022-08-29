@@ -10,6 +10,7 @@ denoiser_module:
   downsample: true
   num_classes: ${dataset.num_classes}
   class_embed_size: 10
+  assert_shapes: false
 T: ${noise_steps}
 width: ${dataset.width}
 height: ${dataset.height}

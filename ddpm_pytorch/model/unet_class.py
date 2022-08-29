@@ -10,12 +10,14 @@ import tensorguard as tg
 class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
 
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int,
-                 time_embed_size: int, p_dropout: float, num_classes: int, class_embed_size: int):
+                 time_embed_size: int, p_dropout: float, num_classes: int, class_embed_size: int,
+                 assert_shapes: bool = True):
         super().__init__(in_channels + class_embed_size, out_channels, kernel_size, stride, padding,
                          time_embed_size, p_dropout)
         self.linear_map_class = nn.Linear(num_classes, class_embed_size)
         with torch.no_grad():
             nn.init.zeros_(self.linear_map_class.bias)
+        self.assert_shapes = assert_shapes
 
     def forward(self, x, time_embed, c):
         emb_c = self.linear_map_class(c)
@@ -46,7 +48,8 @@ class UNetTimeStepClassConditioned(nn.Module):
         self.class_embed_size = class_embed_size
         self.downsample_blocks = nn.ModuleList([
             ResBlockTimeEmbedClassConditioned(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
-                                              paddings[i], time_embed_size, p_dropouts[i], num_classes, class_embed_size) for i in range(len(channels) - 1)
+                                              paddings[i], time_embed_size, p_dropouts[i], num_classes,
+                                              class_embed_size, assert_shapes) for i in range(len(channels) - 1)
         ])
 
         self.use_downsample = downsample
@@ -55,8 +58,8 @@ class UNetTimeStepClassConditioned(nn.Module):
                                                               paddings[-1], time_embed_size, p_dropouts[-1], num_classes, class_embed_size)
         self.upsample_blocks = nn.ModuleList([
             ResBlockTimeEmbedClassConditioned((2 if i != 0 else 1) * channels[-i - 1], channels[-i - 2], kernel_sizes[-i - 1],
-                                              strides[-i - 1],
-                                              paddings[-i - 1], time_embed_size, p_dropouts[-i - 1], num_classes, class_embed_size) for i in range(len(channels) - 1)
+                                              strides[-i - 1], paddings[-i - 1], time_embed_size, p_dropouts[-i - 1], num_classes,
+                                              class_embed_size, assert_shapes) for i in range(len(channels) - 1)
         ])
         self.dropouts = nn.ModuleList([nn.Dropout(p) for p in p_dropouts])
         self.p_dropouts = p_dropouts
