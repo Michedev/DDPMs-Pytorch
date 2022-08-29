@@ -5,7 +5,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from ddpm_pytorch.model.unet import ResBlockTimeEmbed, ImageSelfAttention, timestep_embedding
-
+import tensorguard as tg
 
 class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
 
@@ -21,7 +21,7 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
         emb_c = self.linear_map_class(c)
         emb_c = emb_c.view(*emb_c.shape, 1, 1)
         emb_c = emb_c.expand(x.shape[0], -1, x.shape[-2], x.shape[-1])
-        # tg.guard(emb_c, "B, C, W, H")
+        if self.assert_shapes: tg.guard(emb_c, "B, C, W, H")
         x = torch.cat([x, emb_c], dim=1)
         return super().forward(x, time_embed)
 
@@ -29,14 +29,18 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
 class UNetTimeStepClassConditioned(nn.Module):
 
     def __init__(self, channels: List[int], kernel_sizes: List[int], strides: List[int], paddings: List[int],
-                 downsample: bool, p_dropouts: List[float], time_embed_size: int, num_classes: int, class_embed_size: int):
+                 downsample: bool, p_dropouts: List[float], time_embed_size: int, num_classes: int, class_embed_size: int,
+                 assert_shapes: bool = True):
         super().__init__()
         assert len(channels) == (len(kernel_sizes) + 1) == (len(strides) + 1) == (len(paddings) + 1) == \
                (len(p_dropouts) + 1), f'{len(channels)} == {(len(kernel_sizes) + 1)} == ' \
                                       f'{(len(strides) + 1)} == {(len(paddings) + 1)} == \
                                                               {(len(p_dropouts) + 1)}'
         self.channels = channels
-
+        self.kernel_sizes = kernel_sizes
+        self.strides = strides
+        self.paddings = paddings
+        self.assert_shapes = assert_shapes
         self.num_classes = num_classes
         self.time_embed_size = time_embed_size
         self.class_embed_size = class_embed_size
@@ -65,10 +69,10 @@ class UNetTimeStepClassConditioned(nn.Module):
 
     def forward(self, x: torch.FloatTensor, t: torch.Tensor, c: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         x_channels = x.shape[1]
-        # tg.guard(x, "B, C, W, H")
-        # tg.guard(c, "B, NUMCLASSES")
+        if self.assert_shapes: tg.guard(x, "B, C, W, H")
+        if self.assert_shapes: tg.guard(c, "B, NUMCLASSES")
         time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
-        # tg.guard(time_embedding, "B, TE")
+        if self.assert_shapes: tg.guard(time_embedding, "B, TE")
         hs = []
         h = x
         for i, downsample_block in enumerate(self.downsample_blocks):
@@ -87,6 +91,6 @@ class UNetTimeStepClassConditioned(nn.Module):
             if self.use_downsample and (i != (len(self.upsample_blocks) - 1)):
                 h = F.interpolate(h, size=hs[-i - 1].shape[-1], mode='nearest')
         x_recon = h
-        # tg.guard(x_recon, "B, C, W, H")
-        # tg.guard(v, "B, C, W, H")
+        if self.assert_shapes: tg.guard(x_recon, "B, C, W, H")
+        if self.assert_shapes: tg.guard(v, "B, C, W, H")
         return x_recon
