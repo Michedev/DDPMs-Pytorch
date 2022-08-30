@@ -1,6 +1,6 @@
 import hydra
 import pkg_resources
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from torch.utils.data import Dataset, DataLoader
@@ -20,13 +20,13 @@ def train(config: DictConfig):
     train_dataset: Dataset = hydra.utils.instantiate(config.dataset.train)
     val_dataset: Dataset = hydra.utils.instantiate(config.dataset.val)
 
-    model.save_hyperparameters(config.model)
+    model.save_hyperparameters(OmegaConf.to_object(config)['model'])
 
     pin_memory = 'gpu' in config.accelerator
     train_dl = DataLoader(train_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
     val_dl = DataLoader(val_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
     ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-valid_loss={loss/valid_loss_epoch}', monitor='loss/valid_loss_epoch',
-                                    auto_insert_metric_name=False)
+                                    auto_insert_metric_name=False, save_last=True)
     callbacks = [ckpt_callback]
     if config.ema:
         callbacks.append(EMA(config.ema_decay))

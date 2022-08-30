@@ -15,9 +15,9 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
         super().__init__(in_channels + class_embed_size, out_channels, kernel_size, stride, padding,
                          time_embed_size, p_dropout)
         self.linear_map_class = nn.Sequential(
-            nn.Linear(num_classes, in_channels),
+            nn.Linear(num_classes, class_embed_size),
             nn.SiLU(),
-            nn.Linear(in_channels, in_channels)
+            nn.Linear(class_embed_size, class_embed_size)
 
         )
         with torch.no_grad():
@@ -27,8 +27,9 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
     def forward(self, x, time_embed, c):
         emb_c = self.linear_map_class(c)
         emb_c = emb_c.view(*emb_c.shape, 1, 1)
-        if self.assert_shapes: tg.guard(emb_c, "B, C, 1, 1")
-        x = x + emb_c
+        emb_c = emb_c.expand(x.shape[0], -1, x.shape[-2], x.shape[-1])
+        if self.assert_shapes: tg.guard(emb_c, "B, C, W, H")
+        x = torch.cat([x, emb_c], dim=1)
         return super().forward(x, time_embed)
 
 
