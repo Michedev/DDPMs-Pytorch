@@ -21,7 +21,7 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
 
         )
         with torch.no_grad():
-            nn.init.zeros_(self.linear_map_class.bias)
+            nn.init.zeros_(self.linear_map_class[0].bias)
         self.assert_shapes = assert_shapes
 
     def forward(self, x, time_embed, c):
