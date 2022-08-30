@@ -20,7 +20,7 @@ def train(config: DictConfig):
     train_dataset: Dataset = hydra.utils.instantiate(config.dataset.train)
     val_dataset: Dataset = hydra.utils.instantiate(config.dataset.val)
 
-    model.save_hyperparameters(config)
+    model.save_hyperparameters(config.model)
 
     pin_memory = 'gpu' in config.accelerator
     train_dl = DataLoader(train_dataset, batch_size=config.batch_size, pin_memory=pin_memory)

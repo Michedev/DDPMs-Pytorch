@@ -38,7 +38,7 @@ class GaussianDDPM(pl.LightningModule):
         self.var_scheduler = variance_scheduler
         self.lambda_variational = lambda_variational
         self.alphas_hat: torch.FloatTensor = self.var_scheduler.get_alpha_hat().to(self.device)
-        self.alphas: torch.FloatTensor = self.var_scheduler.get_alpha_noise().to(self.device)
+        self.alphas: torch.FloatTensor = self.var_scheduler.get_alphas().to(self.device)
         self.betas = self.var_scheduler.get_betas().to(self.device)
         self.betas_hat = self.var_scheduler.get_betas_hat().to(self.device)
         self.mse = nn.MSELoss()
