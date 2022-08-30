@@ -138,7 +138,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         return 1 - self._alpha_t(t)
 
     def _mu_t1_t_z_x(self, t1, t, z, x):
-        e_t_t1 = (t - t1).exp()
+        e_t_t1 = (self.betas[t] - self.betas[t1]).exp()
         alpha_t = self._alpha_t(t)
         return e_t_t1 * self._alpha_t(t1) / alpha_t * z + (1 - e_t_t1) * alpha_t * x
 
