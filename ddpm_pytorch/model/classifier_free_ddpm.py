@@ -115,28 +115,28 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             c = torch.zeros(batch_size, self.num_classes, device=self.device)
         if get_intermediate_steps:
             steps = []
-        X_noise = torch.randn(batch_size, self.input_channels,  # start with random noise sampled from N(0, 1)
+        z_t = torch.randn(batch_size, self.input_channels,  # start with random noise sampled from N(0, 1)
                           self.width, self.height, device=self.device)
         for t in range(T - 1, -1, -1):
             if get_intermediate_steps:
-                steps.append(X_noise)
+                steps.append(z_t)
             t = torch.LongTensor([t] * batch_size).to(self.device)
             t_expanded = t.view(-1, 1, 1, 1)
             if is_c_none:
-                eps = self(X_noise, t, c)  # predict via nn the noise
+                eps = self(z_t, t, c)  # predict via nn the noise
             else:
-                eps = (1 + self.w) * self(X_noise, t,  c) - self.w * self(X_noise, t, c * 0)
-            sigma = self.betas_hat[t_expanded]  # get the variance of the noise
-            z = torch.randn_like(X_noise)
-
-            alpha_t = self.alphas[t_expanded]
-            X_noise = 1 / (torch.sqrt(alpha_t)) * \
-                      (X_noise - ((1 - alpha_t) / torch.sqrt(1 - self.alphas_hat[t_expanded])) * eps) + \
-                      sigma * z
-        X_noise = (X_noise + 1) / 2  # bring back to [0, 1]
+                eps = (1 + self.w) * self(z_t, t,  c) - self.w * self(z_t, t, c * 0)
+            x_t = (z_t - self._sigma_t(t_expanded) * eps) / self._alpha_t(t_expanded)
+            if torch.any(t > 0):
+                z_t = self._mu_t1_t_z_x(t_expanded-1, t_expanded, z_t, x_t) + \
+                      self._sigma_hat_t1_t_z_x(t_expanded-1, t_expanded) ** (1 - self.v) * \
+                      self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** self.v * torch.randn_like(x_t)
+            else:
+                z_t = x_t
+        z_t = (z_t + 1) / 2  # bring back to [0, 1]
         if get_intermediate_steps:
-            steps.append(X_noise)
-        return X_noise if not get_intermediate_steps else steps
+            steps.append(z_t)
+        return z_t if not get_intermediate_steps else steps
 
     def _alpha_t(self, t: torch.Tensor) -> torch.Tensor:
         return self.betas[t].sigmoid()
