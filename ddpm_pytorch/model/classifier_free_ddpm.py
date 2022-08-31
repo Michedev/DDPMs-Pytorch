@@ -11,6 +11,9 @@ from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
 
 class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
+    """
+    Implementation of "Classifier-Free Diffusion Guidance"
+    """
 
     def __init__(self, denoiser_module: nn.Module, T: int,
                  w: float, p_uncond: float, width: int,
@@ -121,8 +124,10 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
                 eps = (1 + self.w) * self(z_t, t,  c) - self.w * self(z_t, t, c * 0)
             x_t = (z_t - self._sigma_t(t_expanded) * eps) / self._alpha_t(t_expanded)
             if torch.any(t > 0):
+                # sampling from reverse denoise distribution
+                # see eqn 3/4 pg 2
                 z_t = self._mu_t1_t_z_x(t_expanded, t_expanded-1, z_t, x_t) + \
-                      self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** (1 - self.v) * \
+                      self._sigma_hat_t1_t_z_x(t_expanded-1, t_expanded) ** (1 - self.v) * \
                       self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** self.v * torch.randn_like(x_t)
             else:
                 z_t = x_t
@@ -138,9 +143,12 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         return 1 - self._alpha_t(t)
 
     def _mu_t1_t_z_x(self, t1, t, z, x):
-        e_t_t1 = (t - t1).exp()
+        e_t_t1 = (self.betas[t] - self.betas[t1]).exp()
         alpha_t = self._alpha_t(t)
         return e_t_t1 * self._alpha_t(t1) / alpha_t * z + (1 - e_t_t1) * alpha_t * x
 
-    def _sigma_t1_t_z_x(self, t1, t):
-        return (1 - (self.betas[t] - self.betas[t1]).exp()) * self._sigma_t(t1)
+    def _sigma_t1_t_z_x(self, t1, t2):
+        return (1 - (self.betas[t1] - self.betas[t2]).exp()) * self._sigma_t(t1)
+
+    def _sigma_hat_t1_t_z_x(self, t1, t2):
+        return (1 - (self.betas[t2] - self.betas[t1]).exp()) * self._sigma_t(t1)

@@ -79,7 +79,9 @@ class UNetTimeStepClassConditioned(nn.Module):
     def forward(self, x: torch.FloatTensor, t: torch.Tensor, c: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         x_channels = x.shape[1]
         if self.assert_shapes: tg.guard(x, "B, C, W, H")
-        if self.assert_shapes: tg.guard(c, "B, NUMCLASSES")
+        if self.assert_shapes:
+            tg.guard(c, "B, NUMCLASSES")
+            assert c.mean().item() in [1/c.shape[1], 0.0] # i.e. every row has only one el with value 1 or all 0
         time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
         if self.assert_shapes: tg.guard(time_embedding, "B, TE")
         hs = []
