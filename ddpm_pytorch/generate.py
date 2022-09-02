@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument('--seed', '-s', type=int, default=0, help='Random seed')
     parser.add_argument('--device', '-d', type=str, default='cpu', help='Device to use')
     parser.add_argument('--batch-size', '-b', type=int, default=16, help='Batch size')
+    parser.add_argument('-w', type=float, default=None, help='Class guidance')
     return parser.parse_args()
 
 
@@ -28,6 +29,7 @@ def main():
     Generate images from a trained model in the checkpoint folder
     """
     args = parse_args()
+
     print(args)
     run_path = args.run.abspath()
     pl.seed_everything(args.seed)
@@ -35,11 +37,13 @@ def main():
     assert run_path.basename().endswith('.ckpt'), run_path
     print('loading model from', run_path)
     hparams = OmegaConf.load(run_path.parent / 'config.yaml')
+    if args.w is None:
+        args.w = hparams.model.w
     model_hparams = hparams.model
     denoiser = hydra.utils.instantiate(model_hparams.denoiser_module)
     model = GaussianDDPMClassifierFreeGuidance(
         denoiser_module=denoiser, T=model_hparams.T,
-        w=model_hparams.w, p_uncond=model_hparams.p_uncond, width=model_hparams.width,
+        w=args.w, p_uncond=model_hparams.p_uncond, width=model_hparams.width,
         height=model_hparams.height, input_channels=model_hparams.input_channels,
         num_classes=model_hparams.num_classes, logging_freq=1000, v=model_hparams.v,
         variance_scheduler=hydra.utils.instantiate(hparams.scheduler)).to(args.device)

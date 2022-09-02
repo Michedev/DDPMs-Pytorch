@@ -35,7 +35,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         :param v: generative variance hyper-parameter
         """
         assert 0.0 <= v <= 1.0, f'0.0 <= {v} <= 1.0'
-        assert 0.0 <= w <= 1.0, f'0.0 <= {w} <= 1.0'
+        assert 0.0 <= w, f'0.0 <= {w}'
         assert 0.0 <= p_uncond <= 1.0, f'0.0 <= {p_uncond} <= 1.0'
         super().__init__()
         self.input_channels = input_channels
@@ -67,7 +67,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         return self._step(batch, batch_idx, 'train')
 
     def validation_step(self, batch, batch_idx):
-        if batch_idx == 0:
+        if batch_idx == 0 and self.current_epoch % 10 == 0:
             batch_size = 32
             for i_c in range(self.num_classes):
                 c = torch.zeros(batch_size, self.num_classes, device=self.device)
@@ -82,10 +82,8 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         with torch.no_grad():
             X = X * 2 - 1  # normalize to -1, 1
         y = one_hot(y, self.num_classes).float()
-        is_class_uncond = random() < self.p_uncond
-        if is_class_uncond:
-            with torch.no_grad():
-                y.fill_(0)  # null class
+        is_class_cond = torch.rand(size=(X.shape[0],1), device=X.device) >= self.p_uncond
+        y = y * is_class_cond.float()
         t = torch.randint(0, self.T - 1, (X.shape[0],), device=X.device)
         t_expanded = t.reshape(-1, 1, 1, 1)
         eps = torch.randn_like(X)  # [bs, c, w, h]
@@ -94,15 +92,18 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         loss = self.mse(eps, pred_eps)
         if dataset == 'valid' or (self.iteration % self.logging_freq) == 0:
             self.log(f'loss/{dataset}_loss', loss, on_step=True)
-            self.log(f'loss/{dataset}_loss_{"uncond" if is_class_uncond else "cond"}', loss, on_step=True)
             if dataset == 'train':
                 norm_params = sum(
                     [torch.norm(p.grad) for p in self.parameters() if
                      hasattr(p, 'grad') and p.grad is not None])
                 self.log('grad_norm', norm_params)
-            self.logger.experiment.add_image(f'{dataset}_pred_score_{"uncond" if is_class_uncond else "cond"}', eps[0], self.iteration)
-            self.log(f'noise/{dataset}_norm_eps_{"uncond" if is_class_uncond else "cond"}',
-                     torch.linalg.norm(eps.flatten(1), dim=-1).mean(dim=0), on_step=True)
+            self.logger.experiment.add_image(f'{dataset}_pred_score', eps[0], self.iteration)
+            with torch.no_grad():
+                self.log(f'noise/{dataset}_mean_eps', eps.mean(), on_step=True)
+                self.log(f'noise/{dataset}_std_eps', eps.flatten(1).std(dim=1).mean(), on_step=True)
+                self.log(f'noise/{dataset}_max_eps', eps.max(), on_step=True)
+                self.log(f'noise/{dataset}_min_eps', eps.min(), on_step=True)
+
         self.iteration += 1
         return loss
 
@@ -131,15 +132,15 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             if is_c_none:
                 eps = self(z_t, t, c)  # predict via nn the noise
             else:
-                eps =  self.w * self(z_t, t,  c) + (1 - self.w) * self(z_t, t, c * 0)
+                eps = (1 + self.w) * self(z_t, t,  c) - self.w * self(z_t, t, c * 0)
             x_t = (z_t - self._sigma_t(t_expanded) * eps) / self._alpha_t(t_expanded)
 
             if torch.any(t > 0):
                 # sampling from reverse denoise distribution
                 # see eqn 3/4 pg 2
                 z_t = self._mu_t1_t_z_x(t_expanded, t_expanded-1, z_t, x_t) + \
-                      self._sigma_hat_t1_t_z_x(t_expanded-1, t_expanded) ** (1 - self.v) * \
-                      self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** self.v * torch.randn_like(x_t)
+                      (self._sigma_hat_t1_t_z_x(t_expanded-1, t_expanded) ** (1 - self.v)) * \
+                      (self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** self.v) * torch.randn_like(x_t)
             else:
                 z_t = x_t
         z_t = (z_t + 1) / 2  # bring back to [0, 1]
