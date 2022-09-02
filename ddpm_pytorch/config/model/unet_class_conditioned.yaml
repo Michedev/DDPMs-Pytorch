@@ -9,8 +9,10 @@ denoiser_module:
   time_embed_size: 100  #did not found this hp on the paper
   downsample: true
   num_classes: ${dataset.num_classes}
-  class_embed_size: 10
+  class_embed_size: 3
   assert_shapes: false
+  width: ${dataset.width}
+  height: ${dataset.height}
 T: ${noise_steps}
 width: ${dataset.width}
 height: ${dataset.height}
@@ -19,4 +21,4 @@ input_channels: ${dataset.channels}
 num_classes: ${dataset.num_classes}
 v: 0.2
 w: 0.3
-p_uncond: 0.1
+p_uncond: 0.2

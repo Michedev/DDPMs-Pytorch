@@ -6,6 +6,7 @@ import torch
 from omegaconf import OmegaConf
 from path import Path
 from pytorch_lightning.callbacks import ModelCheckpoint
+from tqdm import tqdm
 
 from ddpm_pytorch.model.classifier_free_ddpm import GaussianDDPMClassifierFreeGuidance
 import torchvision
@@ -24,7 +25,7 @@ def parse_args():
 @torch.no_grad()
 def main():
     """
-    Generate images from a trained model
+    Generate images from a trained model in the checkpoint folder
     """
     args = parse_args()
     print(args)
@@ -33,7 +34,7 @@ def main():
     assert run_path.exists(), run_path
     assert run_path.basename().endswith('.ckpt'), run_path
     print('loading model from', run_path)
-    hparams = OmegaConf.load(run_path.parent / 'lightning_logs' / 'version_0' / 'hparams.yaml')
+    hparams = OmegaConf.load(run_path.parent / 'config.yaml')
     model_hparams = hparams.model
     denoiser = hydra.utils.instantiate(model_hparams.denoiser_module)
     model = GaussianDDPMClassifierFreeGuidance(
@@ -45,7 +46,9 @@ def main():
     model.load_state_dict(torch.load(run_path, map_location=args.device)['state_dict'])
     model = model.eval()
     images = []
-    for i_c in range(model.num_classes):
+    model.on_fit_start()
+
+    for i_c in tqdm(range(model.num_classes)):
         c = torch.zeros((args.batch_size, model.num_classes), device=args.device)
         c[:, i_c] = 1
         gen_images = model.generate(batch_size=args.batch_size, c=c)

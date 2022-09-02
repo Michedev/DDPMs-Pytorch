@@ -10,6 +10,8 @@ from torch.nn.functional import one_hot
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
 
+
+
 class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
     """
     Implementation of "Classifier-Free Diffusion Guidance"
@@ -86,13 +88,21 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
                 y.fill_(0)  # null class
         t = torch.randint(0, self.T - 1, (X.shape[0],), device=X.device)
         t_expanded = t.reshape(-1, 1, 1, 1)
-        eps = torch.randn_like(X)
+        eps = torch.randn_like(X)  # [bs, c, w, h]
         x_t = X * self._alpha_t(t_expanded) + self._sigma_t(t_expanded) * eps # go from x_0 to x_t with the formula
         pred_eps = self(x_t, t, y)
         loss = self.mse(eps, pred_eps)
         if dataset == 'valid' or (self.iteration % self.logging_freq) == 0:
             self.log(f'loss/{dataset}_loss', loss, on_step=True)
             self.log(f'loss/{dataset}_loss_{"uncond" if is_class_uncond else "cond"}', loss, on_step=True)
+            if dataset == 'train':
+                norm_params = sum(
+                    [torch.norm(p.grad) for p in self.parameters() if
+                     hasattr(p, 'grad') and p.grad is not None])
+                self.log('grad_norm', norm_params)
+            self.logger.experiment.add_image(f'{dataset}_pred_score_{"uncond" if is_class_uncond else "cond"}', eps[0], self.iteration)
+            self.log(f'noise/{dataset}_norm_eps_{"uncond" if is_class_uncond else "cond"}',
+                     torch.linalg.norm(eps.flatten(1), dim=-1).mean(dim=0), on_step=True)
         self.iteration += 1
         return loss
 
@@ -121,8 +131,9 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             if is_c_none:
                 eps = self(z_t, t, c)  # predict via nn the noise
             else:
-                eps = (1 + self.w) * self(z_t, t,  c) - self.w * self(z_t, t, c * 0)
+                eps =  self.w * self(z_t, t,  c) + (1 - self.w) * self(z_t, t, c * 0)
             x_t = (z_t - self._sigma_t(t_expanded) * eps) / self._alpha_t(t_expanded)
+
             if torch.any(t > 0):
                 # sampling from reverse denoise distribution
                 # see eqn 3/4 pg 2

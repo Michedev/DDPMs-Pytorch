@@ -134,7 +134,7 @@ class GaussianDDPM(pl.LightningModule):
         return vlb
 
     def configure_optimizers(self):
-        return torch.optim.Adam(params=self.parameters())
+        return torch.optim.Adam(params=self.parameters(), lr=1e-5)
 
     def generate(self, batch_size: Optional[int] = None, T: Optional[int] = None,
                  get_intermediate_steps: bool = False) -> Union[torch.Tensor, List[torch.Tensor]]:

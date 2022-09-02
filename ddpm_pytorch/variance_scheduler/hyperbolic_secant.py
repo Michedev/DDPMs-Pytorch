@@ -3,7 +3,7 @@ from math import exp
 import torch
 from numpy import arctan
 
-from variance_scheduler.abs_var_scheduler import Scheduler
+from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
 
 class HyperbolicSecant(Scheduler):
@@ -14,7 +14,7 @@ class HyperbolicSecant(Scheduler):
         # pg 3 section 2 for the details about the following eqns
         self.b = arctan(exp(-lambda_max / 2))
         self.a = arctan(exp(-lambda_min/2)) - self.b
-        self._beta = 2 * torch.log(torch.tan(self.a * torch.linspace(0, 1, T, dtype=torch.float) + self.b))
+        self._beta = - 2 * torch.log(torch.tan(self.a * torch.linspace(0, 1, T, dtype=torch.float) + self.b))
         self._alpha = 1.0 - self._beta
         self._alpha_hat = torch.cumprod(self._alpha, dim=0)
         self._alpha_hat_t_minus_1 = torch.roll(self._alpha_hat, shifts=1, dims=0)

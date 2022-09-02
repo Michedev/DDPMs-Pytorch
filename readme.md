@@ -49,6 +49,9 @@ __Disable the variational lower bound__, hence training like in "_Denoising Diff
 
       poetry run python ddpm_pytorch/train.py scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
 
+
+### Classifier-free Guidance
+
 Use the labels as __Diffusion Guidance__, as in "_Classifier-free Diffusion Guidance_"
 
       poetry run python ddpm_pytorch/train.py model=unet_class_conditioned noise_steps=1000
