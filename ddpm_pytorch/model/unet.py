@@ -55,8 +55,9 @@ class ResBlockTimeEmbed(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int,
                  time_embed_size: int, p_dropout: float):
         super().__init__()
+        num_groups = self.find_max_num_groups(in_channels)
         self.conv = nn.Sequential(
-            nn.GroupNorm(4, in_channels),
+            nn.GroupNorm(num_groups, in_channels),
             nn.GELU(),
             nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding))
         self.relu = nn.ReLU()
@@ -65,12 +66,18 @@ class ResBlockTimeEmbed(nn.Module):
             nn.Linear(time_embed_size, out_channels)
         )
         self.out_layer = nn.Sequential(
-            nn.GroupNorm(4, out_channels),
+            nn.GroupNorm(num_groups, out_channels),
             nn.GELU(),
             nn.Dropout(p_dropout),
             init_zero(nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding)),
         )
         self.skip_connection = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+
+    def find_max_num_groups(self, in_channels: int) -> int:
+        for i in range(4, 0, -1):
+            if in_channels % i == 0:
+                return i
+        raise Exception()
 
     def forward(self, x, time_embed):
         h = self.conv(x)
