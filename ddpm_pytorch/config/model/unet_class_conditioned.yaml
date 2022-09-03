@@ -11,8 +11,6 @@ denoiser_module:
   num_classes: ${dataset.num_classes}
   class_embed_size: 3
   assert_shapes: false
-  width: ${dataset.width}
-  height: ${dataset.height}
 T: ${noise_steps}
 width: ${dataset.width}
 height: ${dataset.height}
