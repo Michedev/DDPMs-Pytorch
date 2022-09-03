@@ -1,3 +1,4 @@
+import torch
 import hydra
 import pkg_resources
 from omegaconf import DictConfig, OmegaConf
@@ -14,10 +15,13 @@ from ema import EMA
 
 @hydra.main(pkg_resources.resource_filename("ddpm_pytorch", 'config'), 'train.yaml')
 def train(config: DictConfig):
+    ckpt = None
     if config.ckpt is not None:
+        os.chdir(Path(__file__).parent.parent.abspath())
         assert Path(config.ckpt).exists()
-        config = OmegaConf.load(config.ckpt.parent / 'config.yaml')
-        os.chdir(config.ckpt.parent)
+        ckpt = Path(config.ckpt)
+        config = OmegaConf.load(ckpt.parent / 'config.yaml')
+        os.chdir(ckpt.parent.abspath())
     with open('config.yaml', 'w') as f:
         omegaconf.OmegaConf.save(config, f)
     scheduler = hydra.utils.instantiate(config.scheduler)
@@ -25,8 +29,8 @@ def train(config: DictConfig):
     train_dataset: Dataset = hydra.utils.instantiate(config.dataset.train)
     val_dataset: Dataset = hydra.utils.instantiate(config.dataset.val)
 
-    if config.ckpt is not None:
-        model.load_from_checkpoint(config.ckpt)
+    if ckpt is not None:
+        model.load_from_checkpoint(ckpt.basename(), variance_scheduler=scheduler)
 
     model.save_hyperparameters(OmegaConf.to_object(config)['model'])
 
