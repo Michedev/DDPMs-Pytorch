@@ -33,7 +33,7 @@ class UNetTimeStepClassConditioned(nn.Module):
 
     def __init__(self, channels: List[int], kernel_sizes: List[int], strides: List[int], paddings: List[int],
                  downsample: bool, p_dropouts: List[float], time_embed_size: int, num_classes: int, class_embed_size: int,
-                 width: int, height: int, input_channels: int, assert_shapes: bool = True):
+                 width: int, height: int, assert_shapes: bool = True):
         super().__init__()
         assert len(channels) == (len(kernel_sizes) + 1) == (len(strides) + 1) == (len(paddings) + 1) == \
                (len(p_dropouts) + 1), f'{len(channels)} == {(len(kernel_sizes) + 1)} == ' \
@@ -47,7 +47,7 @@ class UNetTimeStepClassConditioned(nn.Module):
         self.num_classes = num_classes
         self.time_embed_size = time_embed_size
         self.class_embed_size = class_embed_size
-        self.linear_class_embedding = nn.Linear(num_classes, input_channels * width * height, bias=False)
+        self.linear_class_embedding = nn.Linear(num_classes, class_embed_size, bias=False)
         self.downsample_blocks = nn.ModuleList([
             ResBlockTimeEmbed((class_embed_size if i == 0 else 0) + channels[i], channels[i + 1], kernel_sizes[i], strides[i],
                                               paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
@@ -65,7 +65,7 @@ class UNetTimeStepClassConditioned(nn.Module):
         self.p_dropouts = p_dropouts
         self.self_attn = ImageSelfAttention(channels[2])
         self.time_embed = nn.Sequential(
-            nn.Linear(self.time_embed_size, self.time_embed_size),
+            nn.Linear(self.time_embed_size+class_embed_size, self.time_embed_size),
             nn.SiLU(),
             nn.Linear(self.time_embed_size, self.time_embed_size),
         )
@@ -74,9 +74,9 @@ class UNetTimeStepClassConditioned(nn.Module):
 
     def forward(self, x: torch.FloatTensor, t: torch.Tensor, c: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         x_channels = x.shape[1]
-        class_embedding = self.linear_class_embedding(c).reshape(x.shape[0], self.input_channels, self.width, self.height)
-        x = x + class_embedding
-        time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
+        class_embedding = self.linear_class_embedding(c)
+        x = x
+        time_embedding = self.time_embed(torch.cat([timestep_embedding(t, self.time_embed_size), class_embedding], dim=1))
         hs = []
         h = x
         for i, downsample_block in enumerate(self.downsample_blocks):
