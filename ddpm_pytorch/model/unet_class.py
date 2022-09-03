@@ -66,7 +66,7 @@ class UNetTimeStepClassConditioned(nn.Module):
         self.self_attn = ImageSelfAttention(channels[2])
         self.time_embed = nn.Sequential(
             nn.Linear(self.time_embed_size+class_embed_size, self.time_embed_size),
-            nn.SiLU(),
+            nn.GELU(),
             nn.Linear(self.time_embed_size, self.time_embed_size),
         )
         self.width = width

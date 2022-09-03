@@ -56,17 +56,17 @@ class ResBlockTimeEmbed(nn.Module):
                  time_embed_size: int, p_dropout: float):
         super().__init__()
         self.conv = nn.Sequential(
-            nn.GroupNorm(1, in_channels),
-            nn.SiLU(),
+            nn.GroupNorm(4, in_channels),
+            nn.GELU(),
             nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding))
         self.relu = nn.ReLU()
         self.l_embedding = nn.Sequential(
-            nn.SiLU(),
+            nn.GELU(),
             nn.Linear(time_embed_size, out_channels)
         )
         self.out_layer = nn.Sequential(
-            nn.GroupNorm(1, out_channels),
-            nn.SiLU(),
+            nn.GroupNorm(4, out_channels),
+            nn.GELU(),
             nn.Dropout(p_dropout),
             init_zero(nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding)),
         )
