@@ -55,9 +55,9 @@ class ResBlockTimeEmbed(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int,
                  time_embed_size: int, p_dropout: float):
         super().__init__()
-        num_groups = self.find_max_num_groups(in_channels)
+        num_groups_in = self.find_max_num_groups(in_channels)
         self.conv = nn.Sequential(
-            nn.GroupNorm(num_groups, in_channels),
+            nn.GroupNorm(num_groups_in, in_channels),
             nn.GELU(),
             nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding))
         self.relu = nn.ReLU()
@@ -65,8 +65,9 @@ class ResBlockTimeEmbed(nn.Module):
             nn.GELU(),
             nn.Linear(time_embed_size, out_channels)
         )
+        num_groups_out = self.find_max_num_groups(out_channels)
         self.out_layer = nn.Sequential(
-            nn.GroupNorm(num_groups, out_channels),
+            nn.GroupNorm(num_groups_out, out_channels),
             nn.GELU(),
             nn.Dropout(p_dropout),
             init_zero(nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding)),
