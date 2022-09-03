@@ -139,7 +139,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         for t in range(T - 1, -1, -1):
             if get_intermediate_steps:
                 steps.append(X_noise)
-            t = torch.LongTensor([t]).to(self.device)
+            t = torch.LongTensor([t] * batch_size).to(self.device)
             eps = ((1 + self.w) * self(X_noise, t, c)) - (self.w * self(X_noise, t, c * 0))  # predict via nn the noise
             # if variational lower bound is present on the loss function hence v (the logit of variance) is trained
             # else the variance is taked fixed as in the original DDPM paper
