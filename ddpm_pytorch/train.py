@@ -14,6 +14,10 @@ from ema import EMA
 
 @hydra.main(pkg_resources.resource_filename("ddpm_pytorch", 'config'), 'train.yaml')
 def train(config: DictConfig):
+    if config.ckpt is not None:
+        assert Path(config.ckpt).exists()
+        config = OmegaConf.load(config.ckpt.parent / 'config.yaml')
+        os.chdir(config.ckpt.parent)
     with open('config.yaml', 'w') as f:
         omegaconf.OmegaConf.save(config, f)
     scheduler = hydra.utils.instantiate(config.scheduler)
@@ -22,8 +26,8 @@ def train(config: DictConfig):
     val_dataset: Dataset = hydra.utils.instantiate(config.dataset.val)
 
     if config.ckpt is not None:
-        assert Path(config.ckpt).exists()
         model.load_from_checkpoint(config.ckpt)
+
     model.save_hyperparameters(OmegaConf.to_object(config)['model'])
 
     pin_memory = 'gpu' in config.accelerator
