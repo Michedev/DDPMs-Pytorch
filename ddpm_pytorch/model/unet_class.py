@@ -21,8 +21,7 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
             nn.Linear(class_embed_size, class_embed_size)
 
         )
-#        with torch.no_grad():
- #           nn.init.zeros_(self.linear_map_class[0].bias)
+
         self.assert_shapes = assert_shapes
 
     def forward(self, x, time_embed, c):
@@ -75,7 +74,7 @@ class UNetTimeStepClassConditioned(nn.Module):
         self.p_dropouts = p_dropouts
         self.self_attn = ImageSelfAttention(channels[2])
         self.time_embed = nn.Sequential(
-            nn.Linear(self.time_embed_size+class_embed_size, self.time_embed_size),
+            nn.Linear(self.time_embed_size, self.time_embed_size),
             nn.GELU(),
             nn.Linear(self.time_embed_size, self.time_embed_size),
         )
