@@ -4,6 +4,7 @@ from typing import Literal, List, Union, Optional
 import pytorch_lightning as pl
 import torch
 import torchvision
+from path import Path
 from torch import nn
 from torch.nn.functional import one_hot
 
@@ -55,7 +56,8 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         self.logging_freq = logging_freq
         self.iteration = 0
         self.num_classes = num_classes
-
+        self.gen_images = Path('gen_images')
+        self.gen_images.mkdir_p()
     def forward(self, x: torch.Tensor, t: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
         """
         :param x: input image [bs, c, w, h]
@@ -77,6 +79,8 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
                 x_c = self.generate(batch_size, c)
                 x_c = torchvision.utils.make_grid(x_c)
                 self.logger.experiment.add_image(f'epoch_gen_val_images_class_{i_c}', x_c, self.current_epoch)
+                torchvision.utils.save_image(x_c, self.gen_images / f'epoch_{self.current_epoch}_class_{i_c}.png')
+
         return self._step(batch, batch_idx, 'valid')
 
     def _step(self, batch, batch_idx, dataset: Literal['train', 'valid']) -> torch.Tensor:
