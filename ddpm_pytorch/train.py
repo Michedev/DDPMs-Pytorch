@@ -1,12 +1,13 @@
 import hydra
 import pkg_resources
 from omegaconf import DictConfig, OmegaConf
+from path import Path
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
 import omegaconf
-
+import os
 
 from ema import EMA
 
@@ -20,6 +21,9 @@ def train(config: DictConfig):
     train_dataset: Dataset = hydra.utils.instantiate(config.dataset.train)
     val_dataset: Dataset = hydra.utils.instantiate(config.dataset.val)
 
+    if config.ckpt is not None:
+        assert Path(config.ckpt).exists()
+        model.load_from_checkpoint(config.ckpt)
     model.save_hyperparameters(OmegaConf.to_object(config)['model'])
 
     pin_memory = 'gpu' in config.accelerator
@@ -36,7 +40,7 @@ def train(config: DictConfig):
     trainer = pl.Trainer(callbacks=callbacks, accelerator=config.accelerator, devices=config.devices,
                          gradient_clip_val=config.gradient_clip_val,
                          gradient_clip_algorithm=config.gradient_clip_algorithm)
-    trainer.fit(model, train_dl, val_dl)
+    trainer.fit(model, train_dl, val_dl, )
 
 
 if __name__ == '__main__':

@@ -6,16 +6,17 @@ defaults:
   - optional model_scheduler: ${model}-${scheduler}
 
 batch_size: 128
-noise_steps: 4_000
+noise_steps: 4_000  # T
 accelerator: null
 devices: null
-gradient_clip_val: 0.0
+gradient_clip_val: 0.0  # gradient clip value - set to 0.0 to disable
 gradient_clip_algorithm: norm
-ema: true
-ema_decay: 0.99
-early_stop: true
-patience: 10
-min_delta: 0.0
+ema: true  # exponential moving average
+ema_decay: 0.99  # exponential moving average decay rate
+early_stop: true  # stop training if the validation loss does not improve for patience epochs
+patience: 10  # early stopping patience; set to -1 to disable
+min_delta: 0.0  # minimum change in the monitored quantity to qualify as an improvement, i.e. an absolute change of less than min_delta, will count as no improvement.
+ckpt: null  # path to checkpoint
 
 hydra:
   run:

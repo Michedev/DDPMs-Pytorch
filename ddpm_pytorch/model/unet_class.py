@@ -47,7 +47,7 @@ class UNetTimeStepClassConditioned(nn.Module):
         self.num_classes = num_classes
         self.time_embed_size = time_embed_size
         self.class_embed_size = class_embed_size
-        self.linear_class_embedding = nn.Linear(num_classes, class_embed_size, bias=False)
+        self.linear_class_embedding = nn.Linear(num_classes, class_embed_size)
         self.downsample_blocks = nn.ModuleList([
             ResBlockTimeEmbed(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
                                               paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
