@@ -74,7 +74,7 @@ class UNetTimeStepClassConditioned(nn.Module):
         self.p_dropouts = p_dropouts
         self.self_attn = ImageSelfAttention(channels[2])
         self.time_embed = nn.Sequential(
-            nn.Linear(self.time_embed_size, self.time_embed_size),
+            nn.Linear(1, self.time_embed_size),
             nn.GELU(),
             nn.Linear(self.time_embed_size, self.time_embed_size),
         )
@@ -83,7 +83,7 @@ class UNetTimeStepClassConditioned(nn.Module):
         x_channels = x.shape[1]
         if self.assert_shapes: tg.guard(x, "B, C, W, H")
         if self.assert_shapes: tg.guard(c, "B, NUMCLASSES")
-        time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
+        time_embedding = self.time_embed(t)
         if self.assert_shapes: tg.guard(time_embedding, "B, TE")
         hs = []
         h = x

@@ -9,7 +9,7 @@ from torch import nn
 from torch.nn.functional import one_hot
 
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
-from distributions import x0_to_xt, sigma_x_t
+from ddpm_pytorch.distributions import x0_to_xt
 
 
 class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
@@ -90,11 +90,12 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         y = one_hot(y, self.num_classes).float()
         is_class_cond = torch.rand(size=(X.shape[0],1), device=X.device) >= self.p_uncond
         y = y * is_class_cond.float()
-        t = torch.randint(0, self.T - 1, (X.shape[0],), device=X.device)
+        t = torch.randint(0, self.T - 1, (X.shape[0], 1), device=X.device)
         t_expanded = t.reshape(-1, 1, 1, 1)
         eps = torch.randn_like(X)  # [bs, c, w, h]
-        x_t = X * self._alpha_t(t_expanded) + self._sigma_t(t_expanded) * eps # go from x_0 to x_t with the formula
-        pred_eps = self(x_t, t, y)
+        alpha_hat_t = self.alphas_hat[t_expanded]
+        x_t = x0_to_xt(X, alpha_hat_t, eps) # go from x_0 to x_t with the formula
+        pred_eps = self(x_t, t / self.T, y)
         loss = self.mse(eps, pred_eps)
         if dataset == 'valid' or (self.iteration % self.logging_freq) == 0:
             self.log(f'loss/{dataset}_loss', loss, on_step=True)
@@ -114,7 +115,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return torch.optim.Adam(params=self.parameters())
+        return torch.optim.Adam(params=self.parameters(), lr=1e-4)
 
     def on_fit_start(self) -> None:
         self.betas = self.betas.to(self.device)
@@ -134,26 +135,24 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             steps = []
         z_t = torch.randn(batch_size, self.input_channels,  # start with random noise sampled from N(0, 1)
                           self.width, self.height, device=self.device)
-        for t in range(T - 1, -1, -1):
+        for t in range(T - 1, 0, -1):
             if get_intermediate_steps:
                 steps.append(z_t)
-            t = torch.LongTensor([t] * batch_size).to(self.device)
+            t = torch.LongTensor([t] * batch_size).to(self.device).view(-1, 1)
             t_expanded = t.view(-1, 1, 1, 1)
             if is_c_none:
-                eps = self(z_t, t, c)  # predict via nn the noise
+                eps = self(z_t, t / T, c)  # predict via nn the noise
             else:
-                eps = (1 + self.w) * self(z_t, t,  c) - self.w * self(z_t, t, c * 0)
-            x_t = (z_t - self._sigma_t(t_expanded) * eps) / self._alpha_t(t_expanded)
-
-            if torch.any(t > 0):
-                # sampling from reverse denoise distribution
-                # see eqn 3/4 pg 2
-                z_t = self._mu_t1_t_z_x(t_expanded, t_expanded-1, z_t, x_t) + \
-                      (self._sigma_hat_t1_t_z_x(t_expanded-1, t_expanded) ** (1 - self.v)) * \
-                      (self._sigma_t1_t_z_x(t_expanded, t_expanded-1) ** self.v) * torch.randn_like(x_t)
-            else:
-                z_t = x_t
-#        z_t = (z_t + 1) / 2  # bring back to [0, 1]
+                eps1 = (1 + self.w) * self(z_t, t / T, c)
+                eps2 = self.w * self(z_t, t / T, c * 0)
+                eps = eps1 - eps2
+            alpha_t = self.alphas[t_expanded]
+            z = torch.randn_like(z_t)
+            alpha_hat_t = self.alphas_hat[t_expanded]
+            z_t = 1 / (torch.sqrt(alpha_t)) * \
+                  (z_t - ((1 - alpha_t) / torch.sqrt(1 - alpha_hat_t)) * eps) + \
+                  self.betas[t_expanded] * z  # denoise step from x_t to x_{t-1} following the DDPM paper. Differently from the
+        z_t = (z_t + 1) / 2  # bring back to [0, 1]
         if get_intermediate_steps:
             steps.append(z_t)
         return z_t if not get_intermediate_steps else steps

@@ -70,7 +70,7 @@ class ResBlockTimeEmbed(nn.Module):
             nn.GroupNorm(num_groups_out, out_channels),
             nn.GELU(),
             nn.Dropout(p_dropout),
-            init_zero(nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding)),
+            nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
         )
         self.skip_connection = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
 
