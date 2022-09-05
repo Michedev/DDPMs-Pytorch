@@ -58,6 +58,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         self.num_classes = num_classes
         self.gen_images = Path('gen_images')
         self.gen_images.mkdir_p()
+
     def forward(self, x: torch.Tensor, t: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
         """
         :param x: input image [bs, c, w, h]
@@ -88,13 +89,13 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         with torch.no_grad():
             X = X * 2 - 1  # normalize to -1, 1
         y = one_hot(y, self.num_classes).float()
-        is_class_cond = torch.rand(size=(X.shape[0],1), device=X.device) >= self.p_uncond
+        is_class_cond = torch.rand(size=(X.shape[0], 1), device=X.device) >= self.p_uncond
         y = y * is_class_cond.float()
         t = torch.randint(0, self.T - 1, (X.shape[0], 1), device=X.device)
         t_expanded = t.reshape(-1, 1, 1, 1)
         eps = torch.randn_like(X)  # [bs, c, w, h]
         alpha_hat_t = self.alphas_hat[t_expanded]
-        x_t = x0_to_xt(X, alpha_hat_t, eps) # go from x_0 to x_t with the formula
+        x_t = x0_to_xt(X, alpha_hat_t, eps)  # go from x_0 to x_t with the formula
         pred_eps = self(x_t, t / self.T, y)
         loss = self.mse(eps, pred_eps)
         if dataset == 'valid' or (self.iteration % self.logging_freq) == 0:
@@ -123,7 +124,6 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         self.alphas = self.alphas.to(self.device)
         self.alphas_hat = self.alphas_hat.to(self.device)
 
-
     def generate(self, batch_size: Optional[int] = None, c: Optional[torch.Tensor] = None, T: Optional[int] = None,
                  get_intermediate_steps: bool = False) -> Union[torch.Tensor, List[torch.Tensor]]:
         T = T or self.T
@@ -151,7 +151,8 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             alpha_hat_t = self.alphas_hat[t_expanded]
             z_t = 1 / (torch.sqrt(alpha_t)) * \
                   (z_t - ((1 - alpha_t) / torch.sqrt(1 - alpha_hat_t)) * eps) + \
-                  self.betas[t_expanded] * z  # denoise step from x_t to x_{t-1} following the DDPM paper. Differently from the
+                  self.betas[
+                      t_expanded] * z  # denoise step from x_t to x_{t-1} following the DDPM paper. Differently from the
         z_t = (z_t + 1) / 2  # bring back to [0, 1]
         if get_intermediate_steps:
             steps.append(z_t)

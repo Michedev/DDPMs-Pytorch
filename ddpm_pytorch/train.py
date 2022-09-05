@@ -16,6 +16,7 @@ from ema import EMA
 @hydra.main(pkg_resources.resource_filename("ddpm_pytorch", 'config'), 'train.yaml')
 def train(config: DictConfig):
     ckpt = None
+    pl.seed_everything(config.seed)
     if config.ckpt is not None:
         os.chdir(Path(__file__).parent.parent.abspath())
         assert Path(config.ckpt).exists()

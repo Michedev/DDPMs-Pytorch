@@ -17,6 +17,7 @@ early_stop: true  # stop training if the validation loss does not improve for pa
 patience: 10  # early stopping patience; set to -1 to disable
 min_delta: 0.0  # minimum change in the monitored quantity to qualify as an improvement, i.e. an absolute change of less than min_delta, will count as no improvement.
 ckpt: null  # path to checkpoint
+seed: 1337  # random seed
 
 hydra:
   run:
