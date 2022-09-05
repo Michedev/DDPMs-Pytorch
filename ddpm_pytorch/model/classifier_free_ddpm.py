@@ -149,10 +149,8 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             alpha_t = self.alphas[t_expanded]
             z = torch.randn_like(z_t)
             alpha_hat_t = self.alphas_hat[t_expanded]
-            z_t = 1 / (torch.sqrt(alpha_t)) * \
-                  (z_t - ((1 - alpha_t) / torch.sqrt(1 - alpha_hat_t)) * eps) + \
-                  self.betas[
-                      t_expanded] * z  # denoise step from x_t to x_{t-1} following the DDPM paper. Differently from the
+            z_t = (z_t - ((1 - alpha_t) / torch.sqrt(1 - alpha_hat_t)) * eps) / (torch.sqrt(alpha_t)) + \
+                  self.betas[t_expanded] * z  # denoise step from x_t to x_{t-1} following the DDPM paper
         z_t = (z_t + 1) / 2  # bring back to [0, 1]
         if get_intermediate_steps:
             steps.append(z_t)
