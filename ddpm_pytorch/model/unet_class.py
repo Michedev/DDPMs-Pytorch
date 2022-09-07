@@ -34,6 +34,11 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
 
 
 class UNetTimeStepClassConditioned(nn.Module):
+    """
+    UNet architecture with class and time embedding injected in every residual block, both in downsample and upsample.
+    Both information are mapped via an 2-layers MLP to a fixed embedding size.
+    After the third downsample block a self-attention layer is applied.
+    """
 
     def __init__(self, channels: List[int], kernel_sizes: List[int], strides: List[int], paddings: List[int],
                  downsample: bool, p_dropouts: List[float], time_embed_size: int, num_classes: int,
@@ -85,6 +90,12 @@ class UNetTimeStepClassConditioned(nn.Module):
         if self.assert_shapes: tg.guard(c, "B, NUMCLASSES")
         time_embedding = self.time_embed(t)
         if self.assert_shapes: tg.guard(time_embedding, "B, TE")
+        h = self.forward_unet(x, time_embedding, c)
+        x_recon = h
+        if self.assert_shapes: tg.guard(x_recon, "B, C, W, H")
+        return x_recon
+
+    def forward_unet(self, x, time_embedding, c):
         hs = []
         h = x
         for i, downsample_block in enumerate(self.downsample_blocks):
@@ -102,7 +113,4 @@ class UNetTimeStepClassConditioned(nn.Module):
             h = upsample_block(h, time_embedding, c)
             if self.use_downsample and (i != (len(self.upsample_blocks) - 1)):
                 h = F.interpolate(h, size=hs[-i - 1].shape[-1], mode='nearest')
-        x_recon = h
-        if self.assert_shapes: tg.guard(x_recon, "B, C, W, H")
-        if self.assert_shapes: tg.guard(v, "B, C, W, H")
-        return x_recon
+        return h
