@@ -7,10 +7,10 @@ defaults:
 
 batch_size: 128
 noise_steps: 4_000  # T
-accelerator: null
-devices: null
+accelerator: null  # from pytorch-lightning, the hardware platform used to train the neural network
+devices: null  # the devices to use in a given hardware platform (see argument above)
 gradient_clip_val: 0.0  # gradient clip value - set to 0.0 to disable
-gradient_clip_algorithm: norm
+gradient_clip_algorithm: norm  # gradient clip algorithm - either 'norm' or 'value'
 ema: true  # exponential moving average
 ema_decay: 0.99  # exponential moving average decay rate
 early_stop: true  # stop training if the validation loss does not improve for patience epochs
@@ -21,4 +21,4 @@ seed: 1337  # random seed
 
 hydra:
   run:
-    dir: saved_models/${now:%Y_%m_%d_%H_%M_%S}
+    dir: saved_models/${now:%Y_%m_%d_%H_%M_%S}  # where run train.py it will create under {current working directory}/saved_models a folder with the current date and time and it will be setted as new cwd

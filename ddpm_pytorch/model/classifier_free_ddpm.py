@@ -56,11 +56,12 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         self.logging_freq = logging_freq
         self.iteration = 0
         self.num_classes = num_classes
-        self.gen_images = Path('gen_images')
+        self.gen_images = Path('training_gen_images')
         self.gen_images.mkdir_p()
 
     def forward(self, x: torch.Tensor, t: torch.Tensor, c: torch.Tensor) -> torch.Tensor:
         """
+        predict the score (noise) to transition from step t to t-1
         :param x: input image [bs, c, w, h]
         :param t: time step [bs]
         :param c:  class [bs, num_classes]
@@ -85,19 +86,27 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
         return self._step(batch, batch_idx, 'valid')
 
     def _step(self, batch, batch_idx, dataset: Literal['train', 'valid']) -> torch.Tensor:
+        """
+        train/validation step of DDPM. The logic is mostly taken from the original DDPM paper,
+        except for the class conditioning part.
+        """
         X, y = batch
         with torch.no_grad():
             X = X * 2 - 1  # normalize to -1, 1
         y = one_hot(y, self.num_classes).float()
-        is_class_cond = torch.rand(size=(X.shape[0], 1), device=X.device) >= self.p_uncond
-        y = y * is_class_cond.float()
-        t = torch.randint(0, self.T - 1, (X.shape[0], 1), device=X.device)
+
+        # dummy flags that with probability p_uncond, we train without class conditioning
+        is_class_cond = torch.rand(size=(X.shape[0],1), device=X.device) >= self.p_uncond
+        y = y * is_class_cond.float()  # set to zero the batch elements not class conditioned
+        t = torch.randint(0, self.T - 1, (X.shape[0],), device=X.device)  # sample t uniformly from [0, T-1]
         t_expanded = t.reshape(-1, 1, 1, 1)
         eps = torch.randn_like(X)  # [bs, c, w, h]
-        alpha_hat_t = self.alphas_hat[t_expanded]
-        x_t = x0_to_xt(X, alpha_hat_t, eps)  # go from x_0 to x_t with the formula
-        pred_eps = self(x_t, t / self.T, y)
-        loss = self.mse(eps, pred_eps)
+        alpha_hat_t = self.alphas_hat[t_expanded] # get \hat{\alpha}_t
+        x_t = x0_to_xt(X, alpha_hat_t, eps)  # go from x_0 to x_t in a single equation thanks to the step
+        pred_eps = self(x_t, t / self.T, y) # predict the noise to transition from x_t to x_{t-1}
+        loss = self.mse(eps, pred_eps) # compute the MSE between the predicted noise and the real noise
+
+        # log every batch on validation set, otherwise log every self.logging_freq batches on training set
         if dataset == 'valid' or (self.iteration % self.logging_freq) == 0:
             self.log(f'loss/{dataset}_loss', loss, on_step=True)
             if dataset == 'train':
@@ -126,6 +135,14 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
 
     def generate(self, batch_size: Optional[int] = None, c: Optional[torch.Tensor] = None, T: Optional[int] = None,
                  get_intermediate_steps: bool = False) -> Union[torch.Tensor, List[torch.Tensor]]:
+        """
+        Generate a new sample starting from pure random noise sampled from a normal standard distribution
+        :param batch_size: the generated batch size
+        :param c: the class conditional matrix [batch_size, num_classes]. By default, it will be deactivated by passing a matrix of full zeroes
+        :param T: the number of generation steps. By default, it will be the number of steps of the training
+        :param get_intermediate_steps: if true, it will all return the intermediate steps of the generation
+        :return: the generated image or the list of intermediate steps
+        """
         T = T or self.T
         batch_size = batch_size or 1
         is_c_none = c is None
@@ -141,34 +158,20 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
             t = torch.LongTensor([t] * batch_size).to(self.device).view(-1, 1)
             t_expanded = t.view(-1, 1, 1, 1)
             if is_c_none:
+                # compute unconditioned noise
                 eps = self(z_t, t / T, c)  # predict via nn the noise
             else:
+                # compute class conditioned noise
                 eps1 = (1 + self.w) * self(z_t, t / T, c)
                 eps2 = self.w * self(z_t, t / T, c * 0)
                 eps = eps1 - eps2
             alpha_t = self.alphas[t_expanded]
             z = torch.randn_like(z_t)
             alpha_hat_t = self.alphas_hat[t_expanded]
+            # denoise step from x_t to x_{t-1} following the DDPM paper
             z_t = (z_t - ((1 - alpha_t) / torch.sqrt(1 - alpha_hat_t)) * eps) / (torch.sqrt(alpha_t)) + \
-                  self.betas[t_expanded] * z  # denoise step from x_t to x_{t-1} following the DDPM paper
+                  self.betas[t_expanded] * z
         z_t = (z_t + 1) / 2  # bring back to [0, 1]
         if get_intermediate_steps:
             steps.append(z_t)
         return z_t if not get_intermediate_steps else steps
-
-    def _alpha_t(self, t: torch.Tensor) -> torch.Tensor:
-        return self.betas[t].sigmoid()
-
-    def _sigma_t(self, t: torch.Tensor) -> torch.Tensor:
-        return 1 - self._alpha_t(t)
-
-    def _mu_t1_t_z_x(self, t1, t, z, x):
-        e_t_t1 = (self.betas[t] - self.betas[t1]).exp()
-        alpha_t = self._alpha_t(t)
-        return e_t_t1 * self._alpha_t(t1) / alpha_t * z + (1 - e_t_t1) * alpha_t * x
-
-    def _sigma_t1_t_z_x(self, t1, t2):
-        return (1 - (self.betas[t1] - self.betas[t2]).exp()) * self._sigma_t(t1)
-
-    def _sigma_hat_t1_t_z_x(self, t1, t2):
-        return (1 - (self.betas[t2] - self.betas[t1]).exp()) * self._sigma_t(t1)
