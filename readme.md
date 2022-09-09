@@ -5,6 +5,23 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 ![](https://hojonathanho.github.io/diffusion/assets/img/pgm_diagram_xarrow.png)
 
+# Project structure
+
+      .
+      ├── ddpm_pytorch  # Source files
+      │   ├── config    # YAML config files with all the hyperparameters
+      │   ├── distributions.py
+      │   ├── ema.py  # Pytorch-Lightning implementation of exponential moving average
+      │   ├── generate.py  # Entry point to generate a new batch of images given the checkpoint path
+      │   ├── __init__.py
+      │   ├── model  # UNet and DDPM train/generation processes are here
+      │   ├── paths.py  # Path constants
+      │   ├── train.py # Entry point to train a new DDPM model
+      │   └── variance_scheduler  # DDPM variance scheduler like linear, cosine
+      ├── pyproject.toml  # Poetry project file
+      └── readme.md   # This file
+
+
 
 # How to train
 
@@ -16,8 +33,25 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
   
 3. Train the model
 
-       poetry run python train.py 
+       poetry run python ddpm_pytorch/train.py 
 
+   By default the model trained is the DDPM from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
+   You can switch to the original DDPM by disabling the vlb with the following command:
+      
+       poetry run python ddpm_pytorch/train.py model.vlb=False
+   You can also train the DDPM with the Classifier-free Diffusion Guidance by changing the model:
+
+       poetry run python ddpm_pytorch/train.py model=unet_class_conditioned
+
+# How to generate
+
+1. Train a model (See previous section)
+
+2. Generate a new batch of images
+
+       poetry run python ddpm_pytorch/generate.py -r RUN
+
+   The other options are: `[--seed SEED] [--device DEVICE] [--batch-size BATCH_SIZE] [-w W] [--scheduler {linear,cosine,tan}] [-T T]`
 
 # Configure the training
 
