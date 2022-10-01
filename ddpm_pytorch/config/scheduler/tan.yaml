@@ -1,0 +1,4 @@
+_target_: variance_scheduler.hyperbolic_secant.HyperbolicSecant
+lambda_min: -20
+lambda_max: 20
+T: ${noise_steps}

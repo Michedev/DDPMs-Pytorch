@@ -8,7 +8,7 @@ class Scheduler(ABC):
         pass
 
     @abstractmethod
-    def get_alpha_noise(self):
+    def get_alphas(self):
         pass
 
     @abstractmethod

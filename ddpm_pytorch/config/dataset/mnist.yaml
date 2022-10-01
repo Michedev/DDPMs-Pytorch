@@ -1,6 +1,7 @@
 width: 28
 height: 28
 channels: 1
+num_classes: 10
 files_location: ~/.cache/torchvision_dataset
 train:
   _target_: torchvision.datasets.MNIST

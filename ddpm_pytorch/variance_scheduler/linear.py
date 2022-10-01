@@ -18,7 +18,7 @@ class LinearScheduler(Scheduler):
     def get_alpha_hat(self):
         return self._alpha_hat
 
-    def get_alpha_noise(self):
+    def get_alphas(self):
         return self._alpha
 
     def get_betas(self):

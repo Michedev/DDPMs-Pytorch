@@ -1,15 +1,9 @@
 import math
-from math import sqrt, log
-from random import randint
 from typing import List, Tuple
 
-import hydra
 import torch
-import torchvision.utils
-from omegaconf import DictConfig
 from torch import nn
 from torch.nn import functional as F
-from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
 
 
 # import tensorguard as tg
@@ -61,22 +55,30 @@ class ResBlockTimeEmbed(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int,
                  time_embed_size: int, p_dropout: float):
         super().__init__()
+        num_groups_in = self.find_max_num_groups(in_channels)
         self.conv = nn.Sequential(
-            nn.GroupNorm(1, in_channels),
-            nn.SiLU(),
+            nn.GroupNorm(num_groups_in, in_channels),
+            nn.GELU(),
             nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding))
         self.relu = nn.ReLU()
         self.l_embedding = nn.Sequential(
-            nn.SiLU(),
+            nn.GELU(),
             nn.Linear(time_embed_size, out_channels)
         )
+        num_groups_out = self.find_max_num_groups(out_channels)
         self.out_layer = nn.Sequential(
-            nn.GroupNorm(1, out_channels),
-            nn.SiLU(),
+            nn.GroupNorm(num_groups_out, out_channels),
+            nn.GELU(),
             nn.Dropout(p_dropout),
-            init_zero(nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding)),
+            nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
         )
         self.skip_connection = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+
+    def find_max_num_groups(self, in_channels: int) -> int:
+        for i in range(4, 0, -1):
+            if in_channels % i == 0:
+                return i
+        raise Exception()
 
     def forward(self, x, time_embed):
         h = self.conv(x)
@@ -124,15 +126,11 @@ class UNetTimeStep(nn.Module):
                               paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
         ])
 
-        self.downsample_blocks = nn.ModuleList([
-            ResBlockTimeEmbed(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
-                              paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
-        ])
         self.use_downsample = downsample
         self.downsample_op = nn.MaxPool2d(kernel_size=2)
         self.middle_block = ResBlockTimeEmbed(channels[-1], channels[-1], kernel_sizes[-1], strides[-1],
                                               paddings[-1], time_embed_size, p_dropouts[-1])
-        channels[0] += 1  # because the output is the image plus the estimated variance coefficients
+        channels[0] *= 2 # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
             ResBlockTimeEmbed((2 if i != 0 else 1) * channels[-i - 1], channels[-i - 2], kernel_sizes[-i - 1],
                               strides[-i - 1],
@@ -151,6 +149,7 @@ class UNetTimeStep(nn.Module):
         x_channels = x.shape[1]
         # tg.guard(x, "B, C, W, H")
         time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
+        # tg.guard(time_embedding, "B, TE")
         hs = []
         h = x
         for i, downsample_block in enumerate(self.downsample_blocks):
@@ -172,3 +171,5 @@ class UNetTimeStep(nn.Module):
         # tg.guard(x_recon, "B, C, W, H")
         # tg.guard(v, "B, C, W, H")
         return x_recon, v
+
+

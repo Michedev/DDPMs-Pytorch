@@ -21,7 +21,7 @@ class CosineScheduler(Scheduler):
     def get_alpha_hat(self):
         return self._alpha_hats
 
-    def get_alpha_noise(self):
+    def get_alphas(self):
         return self._alphas
 
     def get_betas(self):
