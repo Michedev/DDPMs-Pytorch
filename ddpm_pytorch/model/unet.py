@@ -103,6 +103,7 @@ class ImageSelfAttention(nn.Module):
         """
         b, c, w, h = x.shape
         x = x.reshape(b, w * h, c)
+
         attn_output, _ = self.attn_layer(x, x, x)
         return attn_output.reshape(b, c, w, h)
 
@@ -139,7 +140,7 @@ class UNetTimeStep(nn.Module):
         ])
         self.dropouts = nn.ModuleList([nn.Dropout2d(p) for p in p_dropouts])
         self.p_dropouts = p_dropouts
-        self.self_attn = ImageSelfAttention(channels[2])
+        self.self_attn = ImageSelfAttention(channels[3])
         self.time_embed = nn.Sequential(
             nn.Linear(self.time_embed_size, self.time_embed_size),
             nn.SiLU(),
@@ -166,7 +167,7 @@ class UNetTimeStep(nn.Module):
                 h = torch.cat([h, hs[-i]], dim=1)
             h = upsample_block(h, time_embedding)
             if self.use_downsample and (i != (len(self.upsample_blocks) - 1)):
-                h = F.interpolate(h, size=hs[-i - 1].shape[-1], mode='nearest')
+                h = F.interpolate(h, size=hs[-i - 1].shape[-2:], mode='nearest')
         x_recon, v = h[:, :x_channels], h[:, x_channels:]
         # tg.guard(x_recon, "B, C, W, H")
         # tg.guard(v, "B, C, W, H")
