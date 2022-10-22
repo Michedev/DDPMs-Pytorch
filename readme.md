@@ -30,7 +30,7 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 2. Install all the dependencies with the command
 
-        anaconda-project prepare
+       anaconda-project prepare
 
 3. Train the model
 
@@ -121,3 +121,26 @@ __Disable the variational lower bound__, hence training like in "_Denoising Diff
 Use the labels for __Diffusion Guidance__, as in "_Classifier-free Diffusion Guidance_" with the following command
 
     anaconda-project run train model=unet_class_conditioned noise_steps=1000
+
+# Anaconda-project
+## mac-os lock file
+
+1. Remove cudatoolkit from _anaconda-project.yml_ file at the bottom of the file, 
+under `env_specs -> default -> packages`
+2. Decomment `- osx-64`  under `env_specs -> default -> platforms`
+3. Delete _anaconda-project-lock.yml_ file
+4. Run `anaconda-project prepare` to generate the new lock file
+
+## CPU-only environment
+
+To have an alternative a PyTorch CPU-only environment, de-comment the following lines at the bottom of _anaconda-project.yml_
+
+    #  pytorch-cpu:
+    #    packages:
+    #    - cpuonly
+    #    channels:
+    #    - pytorch
+    #    platforms:
+    #    - linux-64
+    #    - win-64
+
