@@ -1,4 +1,3 @@
-from random import random
 from typing import Literal, List, Union, Optional
 
 import pytorch_lightning as pl
@@ -9,7 +8,7 @@ from torch import nn
 from torch.nn.functional import one_hot
 
 from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
-from ddpm_pytorch.distributions import x0_to_xt
+from ddpm_pytorch.utils.distributions import x0_to_xt
 
 
 class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):

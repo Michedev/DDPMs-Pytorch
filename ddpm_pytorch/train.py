@@ -1,4 +1,3 @@
-import torch
 import hydra
 import pkg_resources
 from omegaconf import DictConfig, OmegaConf
@@ -10,7 +9,7 @@ import pytorch_lightning as pl
 import omegaconf
 import os
 
-from ema import EMA
+from ddpm_pytorch.callbacks.ema import EMA
 
 
 @hydra.main(pkg_resources.resource_filename("ddpm_pytorch", 'config'), 'train.yaml')
