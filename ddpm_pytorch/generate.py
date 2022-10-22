@@ -5,13 +5,12 @@ import argparse
 import torch
 from omegaconf import OmegaConf
 from path import Path
-from pytorch_lightning.callbacks import ModelCheckpoint
 from tqdm import tqdm
 
 from ddpm_pytorch.model.classifier_free_ddpm import GaussianDDPMClassifierFreeGuidance
 import torchvision
 
-from ddpm_pytorch.paths import SCHEDULER
+from ddpm_pytorch.utils.paths import SCHEDULER
 
 scheduler_paths = [p for p in SCHEDULER.files('*.yaml')]
 scheduler_names = [x.basename().replace('.yaml', '') for x in scheduler_paths]

@@ -18,30 +18,31 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
       │   ├── paths.py  # Path constants
       │   ├── train.py # Entry point to train a new DDPM model
       │   └── variance_scheduler  # DDPM variance scheduler like linear, cosine
-      ├── pyproject.toml  # Poetry project file
+      ├── anaconda-project.yml  # anaconda project file
+      ├── anaconda-project-lock.yml  # anaconda project lock file
       └── readme.md   # This file
 
 
 
 # How to train
 
-1. Install [Poetry](https://python-poetry.org/) 
+1. Install [anaconda](https://www.anaconda.com/) 
 
 2. Install all the dependencies with the command
 
-        poetry install
-  
+       anaconda-project prepare
+
 3. Train the model
 
-       poetry run python ddpm_pytorch/train.py 
+       anaconda-project run train-gpu 
 
-   By default the model trained is the DDPM from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
+   By default, the model trained is the DDPM from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
    You can switch to the original DDPM by disabling the vlb with the following command:
       
-       poetry run python ddpm_pytorch/train.py model.vlb=False
+       anaconda-project run train model.vlb=False
    You can also train the DDPM with the Classifier-free Diffusion Guidance by changing the model:
 
-       poetry run python ddpm_pytorch/train.py model=unet_class_conditioned
+       anaconda-project run train model=unet_class_conditioned
 
 # How to generate
 
@@ -49,7 +50,7 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 2. Generate a new batch of images
 
-       poetry run python ddpm_pytorch/generate.py -r RUN
+       anaconda-project run generate -r RUN
 
    The other options are: `[--seed SEED] [--device DEVICE] [--batch-size BATCH_SIZE] [-w W] [--scheduler {linear,cosine,tan}] [-T T]`
 
@@ -112,11 +113,34 @@ structure of mnist.yaml
 
 __Disable the variational lower bound__, hence training like in "_Denoising Diffusion Probabilistic Models_" with __linear__ scheduler and in __GPU__
 
-      poetry run python ddpm_pytorch/train.py scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
+    anaconda-project run train scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
 
 
 ### Classifier-free Guidance
 
 Use the labels for __Diffusion Guidance__, as in "_Classifier-free Diffusion Guidance_" with the following command
 
-      poetry run python ddpm_pytorch/train.py model=unet_class_conditioned noise_steps=1000
+    anaconda-project run train model=unet_class_conditioned noise_steps=1000
+
+# Anaconda-project
+## mac-os lock file
+
+1. Remove cudatoolkit from _anaconda-project.yml_ file at the bottom of the file, 
+under `env_specs -> default -> packages`
+2. Decomment `- osx-64`  under `env_specs -> default -> platforms`
+3. Delete _anaconda-project-lock.yml_ file
+4. Run `anaconda-project prepare` to generate the new lock file
+
+## CPU-only environment
+
+To have an alternative a PyTorch CPU-only environment, de-comment the following lines at the bottom of _anaconda-project.yml_
+
+    #  pytorch-cpu:
+    #    packages:
+    #    - cpuonly
+    #    channels:
+    #    - pytorch
+    #    platforms:
+    #    - linux-64
+    #    - win-64
+
