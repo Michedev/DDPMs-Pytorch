@@ -89,25 +89,25 @@ and implement the __len__ and __getitem__ methods.
 Then, you need to add the config file to the _ddpm_pytorch/config/dataset_ folder with a similar
 structure of mnist.yaml
 
-      width: 28  # meta info about the dataset
-      height: 28
-      channels: 1   # number of image channels
-      num_classes: 10  # number of classes
-      files_location: ~/.cache/torchvision_dataset  # location where to store the dataset, in case to be downloaded
-      train:  #dataset.train is instantiated with this config
-        _target_: torchvision.datasets.MNIST  # Dataset class. Following arguments are passed to the dataset class constructor
-        root: ${dataset.files_location}
-        train: true
-        download: true
-        transform:
-          _target_: torchvision.transforms.ToTensor
-      val:  #dataset.val is instantiated with this config
-        _target_: torchvision.datasets.MNIST # Same dataset of train, but the validation split
-        root: ${dataset.files_location}
-        train: false
-        download: true
-        transform:
-          _target_: torchvision.transforms.ToTensor
+    width: 28  # meta info about the dataset
+    height: 28
+    channels: 1   # number of image channels
+    num_classes: 10  # number of classes
+    files_location: ~/.cache/torchvision_dataset  # location where to store the dataset, in case to be downloaded
+    train:  #dataset.train is instantiated with this config
+      _target_: torchvision.datasets.MNIST  # Dataset class. Following arguments are passed to the dataset class constructor
+      root: ${dataset.files_location}
+      train: true
+      download: true
+      transform:
+        _target_: torchvision.transforms.ToTensor
+    val:  #dataset.val is instantiated with this config
+      _target_: torchvision.datasets.MNIST # Same dataset of train, but the validation split
+      root: ${dataset.files_location}
+      train: false
+      download: true
+      transform:
+        _target_: torchvision.transforms.ToTensor
 
 ### Examples of custom training
 
@@ -133,7 +133,9 @@ under `env_specs -> default -> packages`
 
 ## CPU-only environment
 
-To have an alternative a PyTorch CPU-only environment, de-comment the following lines at the bottom of _anaconda-project.yml_
+To have an alternative a PyTorch CPU-only environment, 
+de-comment the following lines at the bottom of _anaconda-project.yml_
+under `env_specs`
 
     #  pytorch-cpu:
     #    packages:
