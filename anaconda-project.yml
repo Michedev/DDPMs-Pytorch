@@ -33,10 +33,14 @@ commands:
     env_spec: default
 
 
+  test:
+    unix: pytest tests
+    env_spec: default
 variables:
   PYTHONPATH: ./
+  HYDRA_FULL_ERROR: 1
 
-#
+
 # In the services section, list any services that should be
 # available before your code runs.
 # Use `anaconda-project add-service` to add services.
@@ -60,15 +64,14 @@ packages:
 - matplotlib
 - seaborn
 - numpy
-- pytorch
+- pytorch=1.12.1
 - torchvision
-- cudatoolkit=10.2
 - pip:
   - pytorch-lightning
   - path
-  - pytest
   - tensorguard
   - hydra-core
+- pytest
 channels:
 - pytorch
 
@@ -89,18 +92,18 @@ env_specs:
     description: Default environment spec for running commands
     packages:
     - cudatoolkit=10.2
+    - pip: []
     channels:
     - pytorch
     platforms:
     - linux-64
     # - osx-64  # remove cudatoolkit to support mac
     - win-64
-#  pytorch-cpu:
-#    packages:
-#    - cpuonly
-#    channels:
-#    - pytorch
-#    platforms:
-#    - linux-64
-#    # - osx-64  # remove cudatoolkit to support mac
-#    - win-64
+  pytorch-cpu:
+    packages:
+    - cpuonly
+    channels:
+    - pytorch
+    platforms:
+    - linux-64
+    - win-64
