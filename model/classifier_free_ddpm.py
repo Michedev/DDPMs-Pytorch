@@ -19,7 +19,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
     def __init__(self, denoiser_module: nn.Module, T: int,
                  w: float, p_uncond: float, width: int,
                  height: int, input_channels: int, num_classes: int,
-                 logging_freq: int, v: float, variance_scheduler: Scheduler):
+                 logging_freq: int, v: float, variance_scheduler: 'Scheduler'):
         """
         :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, c)
         :param T: the amount of noising steps
