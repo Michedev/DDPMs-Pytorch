@@ -127,7 +127,7 @@ Use the labels for __Diffusion Guidance__, as in "_Classifier-free Diffusion Gui
 
 1. Remove cudatoolkit from _anaconda-project.yml_ file at the bottom of the file, 
 under `env_specs -> default -> packages`
-2. Decomment `- osx-64`  under `env_specs -> default -> platforms`
+2. De-comment `- osx-64`  under `env_specs -> default -> platforms`
 3. Delete _anaconda-project-lock.yml_ file
 4. Run `anaconda-project prepare` to generate the new lock file
 
