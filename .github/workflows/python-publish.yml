@@ -29,7 +29,7 @@ jobs:
     - name: Assemble python package
       run: |
            mv model/ ddpm/
-           cp variance_scheduler/ ddpm/
+           cp -r variance_scheduler/ ddpm/
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
