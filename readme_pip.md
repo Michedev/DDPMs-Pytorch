@@ -3,6 +3,11 @@
 Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_", 
 "_Denoising Diffusion Probabilistic Models_" and "_Classifier-free Diffusion Guidance_"
 
+## Install
+
+```bash
+pip install ddpm
+```
 
 # Usage
 
