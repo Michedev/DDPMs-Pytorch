@@ -8,7 +8,7 @@ from torch import nn
 from torch.nn.functional import one_hot
 
 from variance_scheduler.abs_var_scheduler import Scheduler
-from utils.distributions import x0_to_xt
+from .distributions import x0_to_xt
 
 
 class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):

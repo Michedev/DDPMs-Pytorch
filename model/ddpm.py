@@ -6,7 +6,7 @@ import torch
 import torchvision.utils
 from torch import nn
 
-from utils.distributions import sigma_x_t, mu_x_t, mu_hat_xt_x0, sigma_hat_xt_x0, x0_to_xt
+from model.distributions import sigma_x_t, mu_x_t, mu_hat_xt_x0, sigma_hat_xt_x0, x0_to_xt
 from variance_scheduler.abs_var_scheduler import Scheduler
 
 
