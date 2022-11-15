@@ -36,7 +36,10 @@ jobs:
         pip install build
         python -m pip install .[dev]
     - name: Test model/ folder
-      run: python -m pytest ddpm
+      run: |
+           mv ddpm model
+           python -m pytest
+           mv model ddpm
     - name: Build package
       run: python -m build
     - name: Publish package

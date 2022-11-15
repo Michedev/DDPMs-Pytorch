@@ -1,5 +1,5 @@
 import torch
-from . import UNetTimeStep
+from model import UNetTimeStep
 
 
 def test_unet_same_width_height():
