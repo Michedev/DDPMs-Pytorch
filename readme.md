@@ -56,7 +56,7 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 # Configure the training
 
-Under _ddpm_pytorch/config_ there are several yaml files containing the training parameters 
+Under _config_ there are several yaml files containing the training parameters 
 such as model class and paramters, noise steps, scheduler and so on. 
 Note that the hyperparameters in such files are taken from 
 the papers "_Improved Denoising Diffusion Probabilistic Models_" 
@@ -75,7 +75,7 @@ and "_Denoising Diffusion Probabilistic Models_"
     devices: null  # training devices to use; for more details see pytorch lightning
     gradient_clip_val: 0.0  # 0.0 means gradient clip disabled
     gradient_clip_algorithm: norm  # gradient clip has two values: 'norm' or 'value
-    ema: true  # use Exponential Moving Average implemented in ddpm_pytorch/ema.py
+    ema: true  # use Exponential Moving Average implemented in ema.py
     ema_decay: 0.99  # decay factor of EMA
 
     hydra:
@@ -86,7 +86,7 @@ and "_Denoising Diffusion Probabilistic Models_"
 
 To add a custom dataset, you need to create a new class that inherits from torch.utils.data.Dataset
 and implement the __len__ and __getitem__ methods. 
-Then, you need to add the config file to the _ddpm_pytorch/config/dataset_ folder with a similar
+Then, you need to add the config file to the _config/dataset_ folder with a similar
 structure of mnist.yaml
 
     width: 28  # meta info about the dataset

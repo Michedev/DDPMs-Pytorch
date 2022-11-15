@@ -2,7 +2,7 @@ from math import pi
 
 import torch
 
-from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
+from variance_scheduler.abs_var_scheduler import Scheduler
 
 class CosineScheduler(Scheduler):
 

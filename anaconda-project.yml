@@ -26,16 +26,16 @@ description: Implementation of DDPMs in Pytorch to understand how they work
 #
 commands:
   train:
-    unix: python ddpm_pytorch/train.py accelerator=gpu devices=1
+    unix: python train.py accelerator=gpu devices=1
     env_spec: default
   train-cpu:
-    unix: python ddpm_pytorch/train.py accelerator=cpu devices=1
+    unix: python train.py accelerator=cpu devices=1
     env_spec: default
   test:
     unix: pytest tests
     env_spec: default
   generate:
-    unix: python ddpm_pytorch/generate.py
+    unix: python generate.py
     env_spec: default
 
 variables:

@@ -7,10 +7,10 @@ from omegaconf import OmegaConf
 from path import Path
 from tqdm import tqdm
 
-from ddpm_pytorch.model.classifier_free_ddpm import GaussianDDPMClassifierFreeGuidance
+from model.classifier_free_ddpm import GaussianDDPMClassifierFreeGuidance
 import torchvision
 
-from ddpm_pytorch.utils.paths import SCHEDULER
+from utils.paths import SCHEDULER
 
 scheduler_paths = [p for p in SCHEDULER.files('*.yaml')]
 scheduler_names = [x.basename().replace('.yaml', '') for x in scheduler_paths]

@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from ddpm_pytorch.model.unet import ResBlockTimeEmbed, ImageSelfAttention, timestep_embedding
+from model.unet import ResBlockTimeEmbed, ImageSelfAttention
 import tensorguard as tg
 
 
