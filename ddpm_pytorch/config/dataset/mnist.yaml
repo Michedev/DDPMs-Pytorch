@@ -4,7 +4,7 @@ channels: 1
 num_classes: 10
 files_location: ~/.cache/torchvision_dataset
 train:
-  _target_: torchvision.datasets.MNIST
+  _target_: torchvision.datasets.CIFAR10
   root: ${dataset.files_location}
   train: true
   download: true
