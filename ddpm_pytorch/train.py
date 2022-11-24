@@ -8,7 +8,8 @@ from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
 import omegaconf
 import os
-
+import sys
+sys.path.append('/scratch/pl2285/ddpm/DDPMs-Pytorch/ddpm_pytorch')
 from ddpm_pytorch.callbacks.ema import EMA
 
 

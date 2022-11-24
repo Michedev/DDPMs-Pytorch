@@ -7,6 +7,9 @@ from omegaconf import OmegaConf
 from path import Path
 from tqdm import tqdm
 
+import sys
+sys.path.append('/scratch/pl2285/ddpm/DDPMs-Pytorch/ddpm_pytorch')
+
 from ddpm_pytorch.model.classifier_free_ddpm import GaussianDDPMClassifierFreeGuidance
 import torchvision
 
