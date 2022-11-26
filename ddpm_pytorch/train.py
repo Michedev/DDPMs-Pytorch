@@ -6,10 +6,11 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
+import torch
 import omegaconf
 import os
 import sys
-sys.path.append('/scratch/pl2285/ddpm/DDPMs-Pytorch/ddpm_pytorch')
+sys.path.append('/scratch/pl2285/ddpm/DDPMs-Pytorch')
 from ddpm_pytorch.callbacks.ema import EMA
 
 
@@ -29,13 +30,15 @@ def train(config: DictConfig):
     model: pl.LightningModule = hydra.utils.instantiate(config.model, variance_scheduler=scheduler)
     train_dataset: Dataset = hydra.utils.instantiate(config.dataset.train)
     val_dataset: Dataset = hydra.utils.instantiate(config.dataset.val)
+    print(config)
 
     if ckpt is not None:
         model.load_from_checkpoint(ckpt.basename(), variance_scheduler=scheduler)
 
     model.save_hyperparameters(OmegaConf.to_object(config)['model'])
 
-    pin_memory = 'gpu' in config.accelerator
+    #pin_memory = config.accelerator and 'gpu' in config.accelerator
+    pin_memory = torch.cuda.is_available()
     train_dl = DataLoader(train_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
     val_dl = DataLoader(val_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
     ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-valid_loss={loss/valid_loss_epoch}', monitor='loss/valid_loss_epoch',
@@ -46,6 +49,9 @@ def train(config: DictConfig):
     if config.early_stop:
         callbacks.append(EarlyStopping('loss/valid_loss_epoch', min_delta=config.min_delta,
                                        patience=config.patience))
+    if torch.cuda.is_available():
+        config.accelerator = 'gpu'
+        config.devices = 1
     trainer = pl.Trainer(callbacks=callbacks, accelerator=config.accelerator, devices=config.devices,
                          gradient_clip_val=config.gradient_clip_val,
                          gradient_clip_algorithm=config.gradient_clip_algorithm)
