@@ -1,12 +1,12 @@
 defaults:
   - model: unet_paper
   - scheduler: cosine
-  - dataset: cifar10
+  - dataset: mninst
   - optional model_dataset: ${model}-${dataset}
   - optional model_scheduler: ${model}-${scheduler}
 
-batch_size: 64
-noise_steps: 1_000  # T
+batch_size: 128
+noise_steps: 4_000  # T
 accelerator: null  # from pytorch-lightning, the hardware platform used to train the neural network
 devices: null  # the devices to use in a given hardware platform (see argument above)
 gradient_clip_val: 0.0  # gradient clip value - set to 0.0 to disable

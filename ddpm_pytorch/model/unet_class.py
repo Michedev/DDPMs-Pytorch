@@ -19,7 +19,6 @@ class ResBlockTimeEmbedClassConditioned(ResBlockTimeEmbed):
             nn.Linear(num_classes, class_embed_size),
             nn.ReLU(),
             nn.Linear(class_embed_size, class_embed_size)
-            nn.BatchNorm2d(out_channels)
         )
 
         self.assert_shapes = assert_shapes

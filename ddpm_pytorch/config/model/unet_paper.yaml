@@ -1,7 +1,7 @@
 _target_: ddpm_pytorch.model.ddpm.GaussianDDPM
 denoiser_module:
   _target_: ddpm_pytorch.model.unet.UNetTimeStep
-  channels: [3, 128, 256, 256, 384]
+  channels: [1, 128, 256, 256, 384]
   kernel_sizes: [3, 3, 3, 3]
   strides: [1, 1, 1, 1]
   paddings: [1, 1, 1, 1]
