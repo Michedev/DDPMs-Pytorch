@@ -45,11 +45,8 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 1. Install [anaconda](https://www.anaconda.com/) 
 
-2. Install all the dependencies with the command
 
-       anaconda-project prepare
-
-3. Train the model
+2. Train the model
 
        anaconda-project run train-gpu 
 
