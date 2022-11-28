@@ -12,19 +12,32 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 # Project structure
 
       .
-      ├── ddpm_pytorch  # Source files
-      │   ├── config    # YAML config files with all the hyperparameters
-      │   ├── distributions.py
-      │   ├── ema.py  # Pytorch-Lightning implementation of exponential moving average
-      │   ├── generate.py  # Entry point to generate a new batch of images given the checkpoint path
-      │   ├── __init__.py
-      │   ├── model  # UNet and DDPM train/generation processes are here
-      │   ├── paths.py  # Path constants
-      │   ├── train.py # Entry point to train a new DDPM model
-      │   └── variance_scheduler  # DDPM variance scheduler like linear, cosine
-      ├── anaconda-project.yml  # anaconda project file
-      ├── anaconda-project-lock.yml  # anaconda project lock file
-      └── readme.md   # This file
+      ├── anaconda-project-lock.yml  # lock file for anaconda-project
+      ├── anaconda-project.yml  # project specs
+      ├── callbacks  # Pytorch Lightning callbacks for training
+      │   ├── ema.py  # exponential moving average callback
+      ├── config  # config files for training for hydra
+      │   ├── dataset  # dataset config files
+      │   ├── model  # model config files
+      │   ├── model_dataset  # specific (model, dataset) config
+      │   ├── model_scheduler  # specific (model, scheduler) config
+      │   ├── scheduler  # scheduler config files
+      │   └── train.yaml  # training config file
+      ├── generate.py  # script for generating images
+      ├── model  # model files
+      │   ├── classifier_free_ddpm.py  # Classifier-free Diffusion Guidance
+      │   ├── ddpm.py  # Denoising Diffusion Probabilistic Models
+      │   ├── distributions.py  # distributions functions for diffusion
+      │   ├── unet_class.py  # UNet model for Classifier-free Diffusion Guidance
+      │   └── unet.py  # UNet model for Denoising Diffusion Probabilistic Models
+      ├── pyproject.toml  # setuptool file to publish model/ to pypi
+      ├── readme.md   # this file
+      ├── readme_pip.md  # readme for pypi
+      ├── train.py  # script for training
+      ├── utils  # utility functions
+      └── variance_scheduler  # variance scheduler files
+          ├── cosine.py  # cosine variance scheduler
+          └── linear.py  # linear variance scheduler
 
 
 
