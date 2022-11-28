@@ -1,0 +1,3 @@
+_target_: variance_scheduler.cosine.CosineScheduler
+s: 0.0008
+T: ${noise_steps}

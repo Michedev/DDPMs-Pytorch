@@ -1,4 +1,3 @@
-from math import sqrt, log
 from typing import Optional
 
 import torch

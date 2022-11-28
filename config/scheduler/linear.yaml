@@ -1,0 +1,4 @@
+_target_: variance_scheduler.linear.LinearScheduler
+beta_start: 0.000025
+beta_end: 0.005
+T: ${noise_steps}

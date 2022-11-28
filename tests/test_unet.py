@@ -1,5 +1,5 @@
 import torch
-from ddpm_pytorch.model.unet import UNetTimeStep
+from model import UNetTimeStep
 
 
 def test_unet_same_width_height():

@@ -1,6 +1,6 @@
-_target_: ddpm_pytorch.model.classifier_free_ddpm.GaussianDDPMClassifierFreeGuidance
+_target_: model.classifier_free_ddpm.GaussianDDPMClassifierFreeGuidance
 denoiser_module:
-  _target_: ddpm_pytorch.model.unet_class.UNetTimeStepClassConditioned
+  _target_: model.unet_class.UNetTimeStepClassConditioned
   channels: [3, 128, 256, 256, 384]
   kernel_sizes: [3, 3, 3, 3]
   strides: [1, 1, 1, 1]

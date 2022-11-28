@@ -7,8 +7,8 @@ from path import Path
 from torch import nn
 from torch.nn.functional import one_hot
 
-from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
-from ddpm_pytorch.utils.distributions import x0_to_xt
+from variance_scheduler.abs_var_scheduler import Scheduler
+from .distributions import x0_to_xt
 
 
 class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
@@ -19,7 +19,7 @@ class GaussianDDPMClassifierFreeGuidance(pl.LightningModule):
     def __init__(self, denoiser_module: nn.Module, T: int,
                  w: float, p_uncond: float, width: int,
                  height: int, input_channels: int, num_classes: int,
-                 logging_freq: int, v: float, variance_scheduler: Scheduler):
+                 logging_freq: int, v: float, variance_scheduler: 'Scheduler'):
         """
         :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, c)
         :param T: the amount of noising steps

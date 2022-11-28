@@ -1,4 +1,4 @@
-from ddpm_pytorch.variance_scheduler.abs_var_scheduler import Scheduler
+from variance_scheduler.abs_var_scheduler import Scheduler
 import torch
 
 
