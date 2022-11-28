@@ -1,3 +1,7 @@
+![https://pypi.org/project/ddpm/](https://img.shields.io/pypi/dm/ddpm)
+![https://pypi.org/project/ddpm/](https://img.shields.io/pypi/v/ddpm)
+![https://pypi.org/project/ddpm/](https://img.shields.io/pypi/pyversions/ddpm)
+
 # DDPM Pytorch
 
 Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_", 
