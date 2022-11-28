@@ -1,6 +1,6 @@
-![https://pypi.org/project/ddpm/](https://img.shields.io/pypi/dm/ddpm)
-![https://pypi.org/project/ddpm/](https://img.shields.io/pypi/v/ddpm)
-![https://pypi.org/project/ddpm/](https://img.shields.io/pypi/pyversions/ddpm)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/ddpm)](https://pypi.org/project/ddpm/)
+[![PyPI](https://img.shields.io/pypi/v/ddpm)](https://pypi.org/project/ddpm/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ddpm)](https://pypi.org/project/ddpm/)
 
 # DDPM Pytorch
 
