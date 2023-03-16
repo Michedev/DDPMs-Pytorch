@@ -28,6 +28,9 @@ commands:
   train:
     unix: python train.py accelerator=gpu devices=1
     env_spec: default
+  train-class-conditioned:
+    unix: python train.py model=unet_class_conditioned accelerator=gpu devices=1
+    env_spec: default
   train-cpu:
     unix: python train.py accelerator=cpu devices=1
     env_spec: default
@@ -69,7 +72,7 @@ packages:
 - pytorch=1.12.1
 - torchvision
 - pip:
-  - pytorch-lightning
+  - pytorch-lightning<2.0.0
   - path
   - tensorguard
   - hydra-core
@@ -101,11 +104,11 @@ env_specs:
     - linux-64
     # - osx-64  # remove cudatoolkit to support mac
     - win-64
-#  pytorch-cpu:
-#    packages:
-#    - cpuonly
-#    channels:
-#    - pytorch
-#    platforms:
-#    - linux-64
-#    - win-64
+  pytorch-cpu:
+    packages:
+    - cpuonly
+    channels:
+    - pytorch
+    platforms:
+    - linux-64
+    - win-64
