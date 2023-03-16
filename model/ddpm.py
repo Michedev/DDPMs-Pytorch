@@ -125,7 +125,7 @@ class GaussianDDPM(pl.LightningModule):
         if torch.any(t_eq_last):
             p = torch.distributions.Normal(0, 1)
             q = torch.distributions.Normal(sqrt(self.alphas_hat[t]) * x_0, (1 - self.alphas_hat[t]))
-            vlb = torch.distributions.kl_divergence(q, p) * t_eq_last
+            vlb += torch.distributions.kl_divergence(q, p) * t_eq_last
         q = torch.distributions.Normal(mu_hat_xt_x0(x_t, x_0, t, self.alphas_hat, self.alphas, self.betas),
                                        sigma_hat_xt_x0(t, self.betas_hat))  # q(x_{t-1} | x_t, x_0)
         p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas).detach(),
