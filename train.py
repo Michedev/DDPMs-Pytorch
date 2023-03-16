@@ -14,7 +14,7 @@ from callbacks.ema import EMA
 
 # This function is the entry point for the training script. It takes a DictConfig object as an argument, which contains
 # the configuration for the training run. The configuration is loaded from a YAML file using Hydra.
-@hydra.main(pkg_resources.resource_filename("ddpm_pytorch", 'config'), 'train.yaml')
+@hydra.main('config', 'train.yaml')
 def train(config: DictConfig):
     # Initialize checkpoint to None
     ckpt = None
