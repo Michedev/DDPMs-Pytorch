@@ -1,5 +1,4 @@
 import hydra
-import pkg_resources
 from omegaconf import DictConfig, OmegaConf
 from path import Path
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
@@ -61,8 +60,8 @@ def train(config: DictConfig):
     val_dl = DataLoader(val_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
 
     # Create a ModelCheckpoint callback that saves the model weights to disk during training
-    ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-valid_loss={loss/valid_loss_epoch}', 
-                                     monitor='loss/valid_loss_epoch', auto_insert_metric_name=False, save_last=True)
+    ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-valid_loss={loss/val_loss_epoch}', 
+                                     monitor='loss/val_loss_epoch', auto_insert_metric_name=False, save_last=True)
     callbacks = [ckpt_callback]
 
     # Add additional callbacks if specified in the configuration file
@@ -70,7 +69,7 @@ def train(config: DictConfig):
         # Create an Expontential Moving Average callback
         callbacks.append(EMA(config.ema_decay))  
     if config.early_stop:
-        callbacks.append(EarlyStopping('loss/valid_loss_epoch', min_delta=config.min_delta, patience=config.patience))
+        callbacks.append(EarlyStopping('loss/val_loss_epoch', min_delta=config.min_delta, patience=config.patience))
 
     trainer = pl.Trainer(callbacks=callbacks, accelerator=config.accelerator, devices=config.devices,
                          gradient_clip_val=config.gradient_clip_val, gradient_clip_algorithm=config.gradient_clip_algorithm)

@@ -193,10 +193,13 @@ class GaussianDDPM(pl.LightningModule):
             vlb += torch.distributions.kl_divergence(q, p) * t_eq_last
             
         # Compute variational loss for all other time steps
-        q = torch.distributions.Normal(mu_hat_xt_x0(x_t, x_0, t, self.alphas_hat, self.alphas, self.betas),
-                                    sigma_hat_xt_x0(t, self.betas_hat))  # q(x_{t-1} | x_t, x_0)
-        p = torch.distributions.Normal(mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas).detach(),
-                                    sigma_x_t(v, t, self.betas_hat, self.betas))  # p(x_t | x_{t-1})
+        mu_hat = mu_hat_xt_x0(x_t, x_0, t, self.alphas_hat, self.alphas, self.betas)
+        sigma_hat = sigma_hat_xt_x0(t, self.betas_hat)
+        q = torch.distributions.Normal(mu_hat,
+                                    sigma_hat)  # q(x_{t-1} | x_t, x_0)
+        mu = mu_x_t(x_t, t, model_noise, self.alphas_hat, self.betas, self.alphas).detach()
+        sigma = sigma_x_t(v, t, self.betas_hat, self.betas)
+        p = torch.distributions.Normal(mu, sigma)  # p(x_t | x_{t-1})
         # Compute KL divergence between distributions p and q
         # and add it to the variational lower bound
         vlb += torch.distributions.kl_divergence(q, p) * (~t_eq_last).float() * (~t_eq_0).float()
