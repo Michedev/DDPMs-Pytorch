@@ -17,7 +17,7 @@ locking_enabled: true
 env_specs:
   pytorch-cpu:
     locked: true
-    env_spec_hash: 634a17c3da4d8eeee1f14041909ad937ae7d7506
+    env_spec_hash: 892d348cc4db83b4c85213f6eb7ecb74a893255c
     platforms:
     - linux-64
     - win-64
@@ -178,6 +178,7 @@ env_specs:
       - tk=8.6.12=h1ccaba5_0
       - tomli=2.0.1=py310h06a4308_0
       - tornado=6.2=py310h5eee18b_0
+      - tqdm=4.64.1=py310h06a4308_0
       - typing_extensions=4.4.0=py310h06a4308_0
       - urllib3=1.26.14=py310h06a4308_0
       - werkzeug=2.2.2=py310h06a4308_0
@@ -286,6 +287,7 @@ env_specs:
       - tk=8.6.12=h2bbff1b_0
       - tomli=2.0.1=py310haa95532_0
       - tornado=6.2=py310h2bbff1b_0
+      - tqdm=4.64.1=py310haa95532_0
       - typing_extensions=4.4.0=py310haa95532_0
       - urllib3=1.26.14=py310haa95532_0
       - vc=14.2=h21ff451_1
@@ -298,13 +300,9 @@ env_specs:
       - yarl=1.8.1=py310h2bbff1b_0
       - zlib=1.2.13=h8cc25b3_0
       - zstd=1.5.2=h19a0ad4_0
-      pip:
-      - mpmath==1.2.1
-      - pyqt5-sip==12.11.0
-      - tqdm==4.65.0
   default:
     locked: true
-    env_spec_hash: 57ca143361d38ec675b93d59cc50cd5a9973f438
+    env_spec_hash: aeba9449ca885469490c417dd7981359fa79a02e
     platforms:
     - linux-64
     - win-64
@@ -480,6 +478,7 @@ env_specs:
       - tomli=2.0.1=py310h06a4308_0
       - torchtriton=2.0.0=py310
       - tornado=6.2=py310h5eee18b_0
+      - tqdm=4.64.1=py310h06a4308_0
       - typing_extensions=4.4.0=py310h06a4308_0
       - urllib3=1.26.14=py310h06a4308_0
       - werkzeug=2.2.2=py310h06a4308_0
@@ -602,6 +601,7 @@ env_specs:
       - tk=8.6.12=h2bbff1b_0
       - tomli=2.0.1=py310haa95532_0
       - tornado=6.2=py310h2bbff1b_0
+      - tqdm=4.64.1=py310haa95532_0
       - typing_extensions=4.4.0=py310haa95532_0
       - urllib3=1.26.14=py310haa95532_0
       - vc=14.2=h21ff451_1
@@ -614,6 +614,3 @@ env_specs:
       - yarl=1.8.1=py310h2bbff1b_0
       - zlib=1.2.13=h8cc25b3_0
       - zstd=1.5.2=h19a0ad4_0
-      pip:
-      - mpmath==1.2.1
-      - pyqt5-sip==12.11.0

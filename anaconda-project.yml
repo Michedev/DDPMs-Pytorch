@@ -40,6 +40,9 @@ commands:
   generate:
     unix: python generate.py
     env_spec: default
+  plot-cosine-scheduler:
+    unix: python variance_scheduler/cosine.py
+    env_spec: default
 
 variables:
   PYTHONPATH: ./
@@ -78,6 +81,7 @@ packages:
   - hydra-core
 - pytest
 - tensorboard
+- tqdm
 channels:
 - pytorch
 
