@@ -65,18 +65,19 @@ downloads: {}
 # Use `anaconda-project add-packages` to add packages.
 #
 packages:
-- python=3.9
+- python=3.10
 - matplotlib
 - seaborn
 - numpy
-- pytorch=1.12.1
+- pytorch
 - torchvision
 - pip:
-  - pytorch-lightning<2.0.0
+  - pytorch-lightning
   - path
   - tensorguard
   - hydra-core
 - pytest
+- tensorboard
 channels:
 - pytorch
 
@@ -96,10 +97,10 @@ env_specs:
   default:
     description: Default environment spec for running commands
     packages:
-    - cudatoolkit=10.2
-    - pip: []
+    - pytorch-cuda=11.7
     channels:
     - pytorch
+    - nvidia
     platforms:
     - linux-64
     # - osx-64  # remove cudatoolkit to support mac
