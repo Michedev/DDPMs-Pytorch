@@ -115,6 +115,7 @@ class GaussianDDPM(pl.LightningModule):
             gen_images = self.generate(batch_size=16)  # Generate 16 images
             gen_images = torchvision.utils.make_grid(gen_images)  # Convert to grid
             self.logger.experiment.add_image('gen_val_images', gen_images, self.current_epoch)  # Log the images
+            torchvision.utils.save_image(gen_images, f'gen_images/epoch={self.current_epoch}.png')  # Save the images
 
         # Unpack the batch into inputs X and ground truth y
         X, y = batch
