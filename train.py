@@ -39,6 +39,8 @@ def train(config: DictConfig):
     with open('config.yaml', 'w') as f:
         omegaconf.OmegaConf.save(config, f)
 
+    Path.getcwd().joinpath('gen_images').makedirs_p()
+
     # Create the variance scheduler and a deep generative model using Hydra
     scheduler = hydra.utils.instantiate(config.scheduler)
     model: pl.LightningModule = hydra.utils.instantiate(config.model, variance_scheduler=scheduler)
