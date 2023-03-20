@@ -1,16 +1,14 @@
 from math import pi
-from sched import scheduler
-
 import torch
 
-# from variance_scheduler.abs_var_scheduler import Scheduler
+from variance_scheduler.abs_var_scheduler import Scheduler
 
-class CosineScheduler:
+class CosineScheduler(Scheduler):
 
 
     clip_max_value = torch.Tensor([0.999])
 
-    def __init__(self, T: int, s: float = 0.0008):
+    def __init__(self, T: int, s: float = 0.008):
         """
         Cosine variance scheduler.
         The equation for the variance is:
@@ -53,9 +51,9 @@ class CosineScheduler:
     
 
 if __name__ == '__main__':
-    import sys
-    sys.path.append('..')
     scheduler = CosineScheduler(1000)
     import matplotlib.pyplot as plt
     plt.plot(scheduler.get_alpha_hat().numpy())
+    plt.ylabel('$\\alpha_t$')
+    plt.xlabel('t')
     plt.show()
