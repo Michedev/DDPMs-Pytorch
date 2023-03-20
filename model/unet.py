@@ -122,14 +122,12 @@ class UNetTimeStep(nn.Module):
         self.channels = channels
         self.time_embed_size = time_embed_size
         self.downsample_blocks = nn.ModuleList([
-            ResBlockTimeEmbed(channels[i], channels[i + 1], kernel_sizes[i], strides[i],
-                              paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
+            ResBlockTimeEmbed(channels[i], channels[i + 1], kernel_sizes[i], strides[i], paddings[i], time_embed_size, p_dropouts[i]) for i in range(len(channels) - 1)
         ])
 
         self.use_downsample = downsample
         self.downsample_op = nn.MaxPool2d(kernel_size=2)
-        self.middle_block = ResBlockTimeEmbed(channels[-1], channels[-1], kernel_sizes[-1], strides[-1],
-                                              paddings[-1], time_embed_size, p_dropouts[-1])
+        self.middle_block = ResBlockTimeEmbed(channels[-1], channels[-1], kernel_sizes[-1], strides[-1], paddings[-1], time_embed_size, p_dropouts[-1])
         channels[0] *= 2 # because the output is the image plus the estimated variance coefficients
         self.upsample_blocks = nn.ModuleList([
             ResBlockTimeEmbed((2 if i != 0 else 1) * channels[-i - 1], channels[-i - 2], kernel_sizes[-i - 1],
