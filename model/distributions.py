@@ -47,7 +47,7 @@ def mu_hat_xt_x0(x_t: torch.Tensor, x_0: torch.Tensor, t: torch.Tensor, alphas_h
     :param betas: sequence of $\beta$ used for variance scheduling [T}
     :return: the mean of distribution $q(x_{t-1} | x_t, x_0)$
     """
-    one_min_alpha_hat = (1 - alphas_hat[t].reshape(-1, 1, 1, 1))
+    one_min_alpha_hat = (1 - alphas_hat[t].reshape(-1, 1, 1, 1)) + 1e-5
     x = torch.sqrt(alphas_hat[t - 1].reshape(-1, 1, 1, 1)) * betas[t].reshape(-1, 1, 1, 1) / one_min_alpha_hat * x_0 + \
         torch.sqrt(alphas[t].reshape(-1, 1, 1, 1)) * (
                     1 - alphas_hat[t - 1].reshape(-1, 1, 1, 1)) / one_min_alpha_hat * x_t
