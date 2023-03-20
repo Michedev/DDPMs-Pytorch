@@ -48,15 +48,19 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 2. Train the model
 
-       anaconda-project run train-gpu 
+       anaconda-project run train 
 
-   By default, the model trained is the DDPM from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
+   By default, the version of trained DDPM is from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
    You can switch to the original DDPM by disabling the vlb with the following command:
       
        anaconda-project run train model.vlb=False
    You can also train the DDPM with the Classifier-free Diffusion Guidance by changing the model:
 
        anaconda-project run train model=unet_class_conditioned
+    
+    or via the shortcut
+
+       anaconda-project run train-class-conditioned
 
 # How to generate
 
@@ -123,21 +127,57 @@ structure of mnist.yaml
       transform:
         _target_: torchvision.transforms.ToTensor
 
-### Examples of custom training
+# Examples of custom training
 
-__Disable the variational lower bound__, hence training like in "_Denoising Diffusion Probabilistic Models_" with __linear__ scheduler and in __GPU__
+### Disable the variational lower bound, use Linear scheduler, use 1000 noise steps, train in GPU
 
     anaconda-project run train scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
 
 
-### Classifier-free Guidance
+## Classifier-free Guidance
 
 Use the labels for __Diffusion Guidance__, as in "_Classifier-free Diffusion Guidance_" with the following command
 
     anaconda-project run train model=unet_class_conditioned noise_steps=1000
 
-# Anaconda-project
-## mac-os lock file
+## Add your scheduler
+
+1. Add a new class (preferabily under `variance_scheduler/`) which subclasses `Scheduler` class or just copy the same methods syntax of `Scheduler`
+2. Define a new config under `config/scheduler` with the name _my-scheduler.yaml_ containing the following fields
+
+```   
+ _target_: {your scheduler import path} (e.g. variance_scheduler.Linear)
+... // your scheduler additional parameters
+```
+
+Finally train with the following command
+
+    anaconda-project run train scheduler=my-scheduler
+
+## Add your dataset
+
+1. Add a new class which subclasses `torch.utils.data.Dataset`
+
+2. Define a new config under `config/dataset` with the name _my-dataset.yaml_ containing the following fields
+
+```   
+width: ???
+height: ???
+channels: ???
+train:
+  _target_: {your dataset import path} (e.g. torchvision.datasets.MNIST)
+  // your dataset additional parameters
+val:
+  _target_: {your dataset import path} (e.g. torchvision.datasets.MNIST)
+  // your dataset additional parameters
+```
+
+Finally train with the following command
+
+    anaconda-project run train dataset=my-dataset
+    
+### Anaconda-project
+#### mac-os lock file
 
 1. Remove cudatoolkit from _anaconda-project.yml_ file at the bottom of the file, 
 under `env_specs -> default -> packages`
