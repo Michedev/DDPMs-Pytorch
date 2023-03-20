@@ -144,6 +144,16 @@ class UNetTimeStep(nn.Module):
         )
 
     def forward(self, x: torch.FloatTensor, t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass of the model.
+
+        Args:
+            x (torch.FloatTensor): Input tensor of shape (batch_size, num_channels, width, height).
+            t (torch.Tensor): Time tensor of shape (batch_size, 1).
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: Output tensor x_recon of shape (batch_size, num_channels, width, height)
+            and output tensor v of shape (batch_size, num_channels, width, height).
+        """
         x_channels = x.shape[1]
         # tg.guard(x, "B, C, W, H")
         time_embedding = self.time_embed(timestep_embedding(t, self.time_embed_size))
