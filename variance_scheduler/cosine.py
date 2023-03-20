@@ -1,10 +1,11 @@
 from math import pi
+from sched import scheduler
 
 import torch
 
-from variance_scheduler.abs_var_scheduler import Scheduler
+# from variance_scheduler.abs_var_scheduler import Scheduler
 
-class CosineScheduler(Scheduler):
+class CosineScheduler:
 
 
     clip_max_value = torch.Tensor([0.999])
@@ -20,15 +21,23 @@ class CosineScheduler(Scheduler):
             beta_hat = (1 - alpha_hat(t - 1)) / (1 - alpha_hat(t)) * beta(t)
         """
         self.T = T
-        self._alpha_hats = self.f(torch.arange(self.T), T, s)
+        self._alpha_hats = self.f(torch.arange(self.T), T, s) / self.f(torch.tensor([0.0]), T, s)
         self._alpha_hats_t_minus_1 = torch.roll(self._alpha_hats, 1, 0) # shift by 1
         self._alpha_hats_t_minus_1[0] = self._alpha_hats_t_minus_1[1]  # to remove first NaN value
         self._betas = 1.0 - self._alpha_hats / self._alpha_hats_t_minus_1
         self._alphas = 1.0 - self._betas
         self._betas_hat = (1 - self._alpha_hats_t_minus_1) / (1 - self._alpha_hats) * self._betas
+        self._betas_hat[torch.isnan(self._betas_hat)] = 0.0
 
     def f(self, t: torch.Tensor, T: int, s: float):
-        return torch.minimum(torch.cos((t / T + s) / (1 + s) * pi / 2.0).pow(2), self.clip_max_value)
+        """
+        Compute the alpha_hat value for a given t value.
+        :param t: the t value
+        :param T: the total amount of noising steps
+        :param s: smoothing parameter
+        """
+        cos_value = torch.pow(torch.cos((t / T + s) / (1 + s) * pi / 2.0), 2)
+        return torch.minimum(cos_value, self.clip_max_value)
 
     def get_alpha_hat(self):
         return self._alpha_hats
@@ -41,3 +50,12 @@ class CosineScheduler(Scheduler):
 
     def get_betas_hat(self):
         return self._betas_hat
+    
+
+if __name__ == '__main__':
+    import sys
+    sys.path.append('..')
+    scheduler = CosineScheduler(1000)
+    import matplotlib.pyplot as plt
+    plt.plot(scheduler.get_alpha_hat().numpy())
+    plt.show()
