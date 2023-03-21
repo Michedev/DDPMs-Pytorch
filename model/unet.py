@@ -54,6 +54,16 @@ class ResBlockTimeEmbed(nn.Module):
 
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int,
                  time_embed_size: int, p_dropout: float):
+        """
+         Args:
+            in_channels (int): number of input channels
+            out_channels (int): number of output channels
+            kernel_size (int): size of the convolution kernel
+            stride (int): stride of the convolution
+            padding (int): padding of the convolution
+            time_embed_size (int): size of the time embedding
+            p_dropout (float): dropout probability
+        """
         super().__init__()
         num_groups_in = self.find_max_num_groups(in_channels)
         self.conv = nn.Sequential(
@@ -91,6 +101,22 @@ class ResBlockTimeEmbed(nn.Module):
 class ImageSelfAttention(nn.Module):
 
     def __init__(self, num_channels: int, num_heads: int = 1):
+        """
+        Args:
+            num_channels (int): Number of channels in the input.
+            num_heads (int, optional): Number of attention heads. Default: 1.
+
+        Shape:
+            - Input: :math:`(N, C, L)`
+            - Output: :math:`(N, C, L)`
+
+        Examples:
+        >>> attention = ImageSelfAttention(3)
+        >>> input = torch.randn(1, 3, 64)
+        >>> output = attention(input)
+        >>> output.shape
+        torch.Size([1, 3, 64]) """
+
         super().__init__()
         self.channels = num_channels
         self.heads = num_heads
