@@ -60,7 +60,7 @@ Under _config_ there are several yaml files containing the training parameters
 such as model class and paramters, noise steps, scheduler and so on. 
 Note that the hyperparameters in such files are taken from 
 the papers "_Improved Denoising Diffusion Probabilistic Models_" 
-and "_Denoising Diffusion Probabilistic Models_"
+and "_Denoising Diffusion Probabilistic Models_". Down below the explaination of the config file for train the model:
 
     defaults:
       - model: unet_paper  # take the model config from model/unet_paper.yaml
