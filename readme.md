@@ -9,41 +9,20 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 ![](https://hojonathanho.github.io/diffusion/assets/img/pgm_diagram_xarrow.png)
 
-# Project structure
 
-      .
-      ├── anaconda-project-lock.yml  # lock file for anaconda-project
-      ├── anaconda-project.yml  # project specs
-      ├── callbacks  # Pytorch Lightning callbacks for training
-      │   ├── ema.py  # exponential moving average callback
-      ├── config  # config files for training for hydra
-      │   ├── dataset  # dataset config files
-      │   ├── model  # model config files
-      │   ├── model_dataset  # specific (model, dataset) config
-      │   ├── model_scheduler  # specific (model, scheduler) config
-      │   ├── scheduler  # scheduler config files
-      │   └── train.yaml  # training config file
-      ├── generate.py  # script for generating images
-      ├── model  # model files
-      │   ├── classifier_free_ddpm.py  # Classifier-free Diffusion Guidance
-      │   ├── ddpm.py  # Denoising Diffusion Probabilistic Models
-      │   ├── distributions.py  # distributions functions for diffusion
-      │   ├── unet_class.py  # UNet model for Classifier-free Diffusion Guidance
-      │   └── unet.py  # UNet model for Denoising Diffusion Probabilistic Models
-      ├── pyproject.toml  # setuptool file to publish model/ to pypi
-      ├── readme.md   # this file
-      ├── readme_pip.md  # readme for pypi
-      ├── train.py  # script for training
-      ├── utils  # utility functions
-      └── variance_scheduler  # variance scheduler files
-          ├── cosine.py  # cosine variance scheduler
-          └── linear.py  # linear variance scheduler
+# How to use
 
+1.  Install pip package containing the pytorch lightning model, which includes also the training step
 
+        pip install ddpm
+
+2. Clone the repository
+
+        git clone git@github.com:Michedev/VAE_anomaly_detection.git
 
 # How to train
 
-1. Install [anaconda](https://www.anaconda.com/) 
+1. Install [anaconda](https://www.anaconda.com/) or miniconda, but install anaconda-project `conda install anaconda-project`
 
 
 2. Train the model
@@ -51,9 +30,10 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
        anaconda-project run train 
 
    By default, the version of trained DDPM is from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
-   You can switch to the original DDPM by disabling the vlb with the following command:
+   You can switch to the original DDPM by disabling the variational lower bound with the following command:
       
        anaconda-project run train model.vlb=False
+   
    You can also train the DDPM with the Classifier-free Diffusion Guidance by changing the model:
 
        anaconda-project run train model=unet_class_conditioned
@@ -61,6 +41,8 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
     or via the shortcut
 
        anaconda-project run train-class-conditioned
+
+    Finally, under saved_models/{train-datetime} you can find the trained model, the tensorboard logs, the training config
 
 # How to generate
 
@@ -99,6 +81,36 @@ and "_Denoising Diffusion Probabilistic Models_"
     hydra:
       run:
         dir: saved_models/${now:%Y_%m_%d_%H_%M_%S}
+
+# Project structure
+
+      .
+      ├── anaconda-project-lock.yml  # lock file for anaconda-project
+      ├── anaconda-project.yml  # project specs
+      ├── callbacks  # Pytorch Lightning callbacks for training
+      │   ├── ema.py  # exponential moving average callback
+      ├── config  # config files for training for hydra
+      │   ├── dataset  # dataset config files
+      │   ├── model  # model config files
+      │   ├── model_dataset  # specific (model, dataset) config
+      │   ├── model_scheduler  # specific (model, scheduler) config
+      │   ├── scheduler  # scheduler config files
+      │   └── train.yaml  # training config file
+      ├── generate.py  # script for generating images
+      ├── model  # model files
+      │   ├── classifier_free_ddpm.py  # Classifier-free Diffusion Guidance
+      │   ├── ddpm.py  # Denoising Diffusion Probabilistic Models
+      │   ├── distributions.py  # distributions functions for diffusion
+      │   ├── unet_class.py  # UNet model for Classifier-free Diffusion Guidance
+      │   └── unet.py  # UNet model for Denoising Diffusion Probabilistic Models
+      ├── pyproject.toml  # setuptool file to publish model/ to pypi
+      ├── readme.md   # this file
+      ├── readme_pip.md  # readme for pypi
+      ├── train.py  # script for training
+      ├── utils  # utility functions
+      └── variance_scheduler  # variance scheduler files
+          ├── cosine.py  # cosine variance scheduler
+          └── linear.py  # linear variance scheduler
 
 ### Add custom dataset
 
