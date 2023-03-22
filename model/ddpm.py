@@ -1,5 +1,5 @@
 from math import sqrt
-from typing import Tuple, Optional, Union, List
+from typing import Callable, Tuple, Optional, Union, List, TypeVar
 
 import pytorch_lightning as pl
 import torch
@@ -16,9 +16,7 @@ class GaussianDDPM(pl.LightningModule):
     This class implements both original DDPM model (by setting vlb=False) and Improved DDPM paper
     """
 
-    def __init__(self, denoiser_module: nn.Module, T: int,
-                 variance_scheduler: Scheduler, lambda_variational: float, width: int,
-                 height: int, input_channels: int, logging_freq: int, vlb: bool):
+    def __init__(self, denoiser_module: nn.Module, opt: Union[TypeVar[torch.optim.Optimizer], Callable[[], torch.optim.Optimizer], "partial[torch.optim.optimzer]"], T: int, variance_scheduler: Scheduler, lambda_variational: float, width: int, height: int, input_channels: int, logging_freq: int, vlb: bool, init_step_vlb: int):
         """
         :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, t)
         :param T: the amount of noising steps
@@ -29,11 +27,13 @@ class GaussianDDPM(pl.LightningModule):
         :param input_channels: image input channels
         :param logging_freq: frequency of logging loss function during training
         :param vlb: true to include the variational lower bound into the loss function
+        :param init_step_vlb: the step at which the variational lower bound is included into the loss function
         """
         super().__init__()
         self.input_channels = input_channels
         self.denoiser_module = denoiser_module
         self.T = T
+        self.opt_class = opt
 
         self.var_scheduler = variance_scheduler
         self.lambda_variational = lambda_variational
@@ -46,6 +46,7 @@ class GaussianDDPM(pl.LightningModule):
         self.height = height
         self.logging_freq = logging_freq
         self.vlb = vlb
+        self.init_step_vlb = init_step_vlb
         self.iteration = 0
 
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -92,7 +93,7 @@ class GaussianDDPM(pl.LightningModule):
         noise_loss = self.mse(eps, pred_eps)
         loss = loss + noise_loss
         # If using the VLB loss, compute the VLB loss and add it to the total loss
-        if self.vlb:
+        if self.iteration >= self.init_step_vlb and self.vlb:
             loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
             loss = loss + loss_vlb
         # If it's time to log the loss, log the total loss and optionally the noise and VLB losses
@@ -207,7 +208,7 @@ class GaussianDDPM(pl.LightningModule):
         return vlb
 
     def configure_optimizers(self):
-        return torch.optim.Adam(params=self.parameters(), lr=1e-5)
+        return self.opt_class(params=self.parameters())
 
     def generate(self, batch_size: Optional[int] = None, T: Optional[int] = None,
                  get_intermediate_steps: bool = False) -> Union[torch.Tensor, List[torch.Tensor]]:

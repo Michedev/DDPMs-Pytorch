@@ -15,3 +15,4 @@ height: ${dataset.height}
 logging_freq: 1_000
 input_channels: ${dataset.channels}
 vlb: true
+init_step_vlb: 1_000

@@ -43,7 +43,8 @@ def train(config: DictConfig):
 
     # Create the variance scheduler and a deep generative model using Hydra
     scheduler = hydra.utils.instantiate(config.scheduler)
-    model: pl.LightningModule = hydra.utils.instantiate(config.model, variance_scheduler=scheduler)
+    opt = hydra.utils.instantiate(config.optimizer)
+    model: pl.LightningModule = hydra.utils.instantiate(config.model, variance_scheduler=scheduler, opt=opt)
 
     # Create training and validation datasets using Hydra
     train_dataset: Dataset = hydra.utils.instantiate(config.dataset.train)

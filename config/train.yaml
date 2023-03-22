@@ -2,6 +2,7 @@ defaults:
   - model: unet_paper
   - scheduler: cosine
   - dataset: mnist
+  - optimizer: adam_ddpm
   - optional model_dataset: ${model}-${dataset}
   - optional model_scheduler: ${model}-${scheduler}
 
