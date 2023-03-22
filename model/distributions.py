@@ -20,7 +20,7 @@ def mu_x_t(x_t: torch.Tensor, t: torch.Tensor, model_noise: torch.Tensor, alphas
     return x
 
 
-def sigma_x_t(v: torch.Tensor, t: torch.Tensor, betas_hat: torch.Tensor, betas: torch.Tensor) -> torch.Tensor:
+def sigma_x_t(v: torch.Tensor, t: torch.Tensor, betas_hat: torch.Tensor, betas: torch.Tensor, eps: float = 1e-5) -> torch.Tensor:
     """
     Compute the variance at time step t as defined in "Improving Denoising Diffusion probabilistic Models", eqn 15 page 4
     :param v: the neural network "logits" used to compute the variance [BS, C, W, H]
