@@ -1,5 +1,5 @@
 from math import sqrt
-from typing import Callable, Tuple, Optional, Union, List, TypeVar
+from typing import Callable, Tuple, Optional, Union, List, ClassVar
 
 import pytorch_lightning as pl
 import torch
@@ -9,14 +9,13 @@ from torch import nn
 from model.distributions import sigma_x_t, mu_x_t, mu_hat_xt_x0, sigma_hat_xt_x0, x0_to_xt
 from variance_scheduler.abs_var_scheduler import Scheduler
 
-
 class GaussianDDPM(pl.LightningModule):
     """
     Gaussian De-noising Diffusion Probabilistic Model
     This class implements both original DDPM model (by setting vlb=False) and Improved DDPM paper
     """
 
-    def __init__(self, denoiser_module: nn.Module, opt: Union[TypeVar[torch.optim.Optimizer], Callable[[], torch.optim.Optimizer], "partial[torch.optim.optimzer]"], T: int, variance_scheduler: Scheduler, lambda_variational: float, width: int, height: int, input_channels: int, logging_freq: int, vlb: bool, init_step_vlb: int):
+    def __init__(self, denoiser_module: nn.Module, opt: Union[ClassVar[torch.optim.Optimizer], Callable[[], torch.optim.Optimizer], "partial[torch.optim.optimzer]"], T: int, variance_scheduler: Scheduler, lambda_variational: float, width: int, height: int, input_channels: int, logging_freq: int, vlb: bool, init_step_vlb: int):
         """
         :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, t)
         :param T: the amount of noising steps
