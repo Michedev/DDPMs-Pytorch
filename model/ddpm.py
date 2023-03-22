@@ -1,5 +1,5 @@
 from math import sqrt
-from typing import Callable, Tuple, Optional, Union, List, ClassVar
+from typing import Callable, Tuple, Optional, Type, Union, List, ClassVar
 
 import pytorch_lightning as pl
 import torch
@@ -15,7 +15,7 @@ class GaussianDDPM(pl.LightningModule):
     This class implements both original DDPM model (by setting vlb=False) and Improved DDPM paper
     """
 
-    def __init__(self, denoiser_module: nn.Module, opt: Union[ClassVar[torch.optim.Optimizer], Callable[[], torch.optim.Optimizer], "partial[torch.optim.optimzer]"], T: int, variance_scheduler: Scheduler, lambda_variational: float, width: int, height: int, input_channels: int, logging_freq: int, vlb: bool, init_step_vlb: int):
+    def __init__(self, denoiser_module: nn.Module, opt: Union[Type[torch.optim.Optimizer], Callable[[], torch.optim.Optimizer], "partial[torch.optim.optimzer]"], T: int, variance_scheduler: Scheduler, lambda_variational: float, width: int, height: int, input_channels: int, logging_freq: int, vlb: bool, init_step_vlb: int):
         """
         :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, t)
         :param T: the amount of noising steps
