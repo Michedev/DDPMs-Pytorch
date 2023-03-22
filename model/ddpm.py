@@ -47,6 +47,7 @@ class GaussianDDPM(pl.LightningModule):
         self.vlb = vlb
         self.init_step_vlb = init_step_vlb
         self.iteration = 0
+        self.init_step_vlb = max(1, self.init_step_vlb) # make sure that init_step_vlb is at least 1
 
     def forward(self, x: torch.FloatTensor, t: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
@@ -92,13 +93,14 @@ class GaussianDDPM(pl.LightningModule):
         noise_loss = self.mse(eps, pred_eps)
         loss = loss + noise_loss
         # If using the VLB loss, compute the VLB loss and add it to the total loss
-        if self.iteration >= self.init_step_vlb and self.vlb:
+        use_vlb = self.iteration >= self.init_step_vlb and self.vlb
+        if use_vlb:
             loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
             loss = loss + loss_vlb
         # If it's time to log the loss, log the total loss and optionally the noise and VLB losses
         if (self.iteration % self.logging_freq) == 0:
             self.log('loss/train_loss', loss, on_step=True)
-            if self.vlb:
+            if use_vlb:
                 self.log('loss/train_loss_noise', noise_loss, on_step=True)
                 self.log('loss/train_loss_vlb', loss_vlb, on_step=True)
             # Log the norm of the gradients of the parameters
@@ -145,7 +147,7 @@ class GaussianDDPM(pl.LightningModule):
 
         # If using the variational lower bound (VLB), compute the VLB loss and add it to the reconstruction loss
         # self.iteration > 0 is to avoid computing the VLB loss before the first training step because gives NaNs
-        if self.init_step_vlb >= self.iteration and self.iteration > 0 and self.vlb:
+        if self.iteration >= self.init_step_vlb and self.vlb:
             eps_loss = loss
             self.log('loss/val_eps_loss', eps_loss, on_step=True)
             loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
