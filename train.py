@@ -41,7 +41,7 @@ def train(config: DictConfig):
         omegaconf.OmegaConf.save(config, f)
 
     Path.getcwd().joinpath('gen_images').makedirs_p()
-    # copy paste model/ folder
+    # copy paste model/ folder into the checkpoint folder
     MODEL.copytree(Path.getcwd().joinpath('model'))
 
     # Create the variance scheduler and a deep generative model using Hydra
