@@ -9,6 +9,7 @@ import omegaconf
 import os
 
 from callbacks.ema import EMA
+from utils.paths import MODEL
 
 
 # This function is the entry point for the training script. It takes a DictConfig object as an argument, which contains
@@ -40,6 +41,8 @@ def train(config: DictConfig):
         omegaconf.OmegaConf.save(config, f)
 
     Path.getcwd().joinpath('gen_images').makedirs_p()
+    # copy paste model/ folder
+    MODEL.copytree(Path.getcwd().joinpath('model'))
 
     # Create the variance scheduler and a deep generative model using Hydra
     scheduler = hydra.utils.instantiate(config.scheduler)
