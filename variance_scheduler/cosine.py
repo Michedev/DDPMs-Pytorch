@@ -19,15 +19,16 @@ class CosineScheduler(Scheduler):
             beta_hat = (1 - alpha_hat(t - 1)) / (1 - alpha_hat(t)) * beta(t)
         """
         self.T = T
-        self._alpha_hats = self.f(torch.arange(self.T), T, s) / self.f(torch.tensor([0.0]), T, s)
-        self._alpha_hats_t_minus_1 = torch.roll(self._alpha_hats, 1, 0) # shift by 1
+        self._alpha_hats = self._alpha_hat_function(torch.arange(self.T), T, s)
+        self._alpha_hats_t_minus_1 = torch.roll(self._alpha_hats, shifts=1, dims=0) # shift forward by 1 so that alpha_first[t] = alpha[t-1]
         self._alpha_hats_t_minus_1[0] = self._alpha_hats_t_minus_1[1]  # to remove first NaN value
         self._betas = 1.0 - self._alpha_hats / self._alpha_hats_t_minus_1
+        self._betas = torch.minimum(self._betas, self.clip_max_value)
         self._alphas = 1.0 - self._betas
         self._betas_hat = (1 - self._alpha_hats_t_minus_1) / (1 - self._alpha_hats) * self._betas
         self._betas_hat[torch.isnan(self._betas_hat)] = 0.0
 
-    def f(self, t: torch.Tensor, T: int, s: float):
+    def _alpha_hat_function(self, t: torch.Tensor, T: int, s: float):
         """
         Compute the alpha_hat value for a given t value.
         :param t: the t value
@@ -35,7 +36,7 @@ class CosineScheduler(Scheduler):
         :param s: smoothing parameter
         """
         cos_value = torch.pow(torch.cos((t / T + s) / (1 + s) * pi / 2.0), 2)
-        return torch.minimum(cos_value, self.clip_max_value)
+        return cos_value
 
     def get_alpha_hat(self):
         return self._alpha_hats
