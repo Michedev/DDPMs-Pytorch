@@ -1,5 +1,5 @@
 from math import sqrt
-from typing import Callable, Tuple, Optional, Type, Union, List, ClassVar
+from typing import Callable, Iterator, Tuple, Optional, Type, Union, List, ClassVar
 
 import pytorch_lightning as pl
 import torch
@@ -8,6 +8,7 @@ from torch import nn
 
 from model.distributions import sigma_x_t, mu_x_t, mu_hat_xt_x0, sigma_hat_xt_x0, x0_to_xt
 from variance_scheduler.abs_var_scheduler import Scheduler
+from torch.nn.parameter import Parameter
 
 class GaussianDDPM(pl.LightningModule):
     """
@@ -15,7 +16,7 @@ class GaussianDDPM(pl.LightningModule):
     This class implements both original DDPM model (by setting vlb=False) and Improved DDPM paper
     """
 
-    def __init__(self, denoiser_module: nn.Module, opt: Union[Type[torch.optim.Optimizer], Callable[[], torch.optim.Optimizer], "partial[torch.optim.optimzer]"], T: int, variance_scheduler: Scheduler, lambda_variational: float, width: int, height: int, input_channels: int, logging_freq: int, vlb: bool, init_step_vlb: int):
+    def __init__(self, denoiser_module: nn.Module, opt: Union[Type[torch.optim.Optimizer], Callable[[Iterator[Parameter]], torch.optim.Optimizer]], T: int, variance_scheduler: Scheduler, lambda_variational: float, width: int, height: int, input_channels: int, logging_freq: int, vlb: bool, init_step_vlb: int):
         """
         :param denoiser_module: The nn which computes the denoise step i.e. q(x_{t-1} | x_t, t)
         :param T: the amount of noising steps
@@ -99,7 +100,7 @@ class GaussianDDPM(pl.LightningModule):
             loss = loss + loss_vlb
         # If it's time to log the loss, log the total loss and optionally the noise and VLB losses
         if (self.iteration % self.logging_freq) == 0:
-            self.log('loss/train_loss', loss, on_step=True)
+            self.log('loss/train_loss', loss, on_step=True, prog_bar=True)
             if use_vlb:
                 self.log('loss/train_loss_noise', noise_loss, on_step=True)
                 self.log('loss/train_loss_vlb', loss_vlb, on_step=True)
@@ -109,7 +110,7 @@ class GaussianDDPM(pl.LightningModule):
         # Increment the iteration count
         self.iteration += 1
         # Return the loss as a dictionary
-        return dict(loss=loss)
+        return dict(loss=loss, noise_loss=noise_loss, vlb_loss=loss_vlb if use_vlb else None)
 
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
         # Generate images and log them for visualization
@@ -158,7 +159,7 @@ class GaussianDDPM(pl.LightningModule):
         self.log('loss/val_loss', loss, on_step=True)
 
         # Return the loss as a dictionary
-        return dict(loss=loss)
+        return dict(loss=loss, noise_loss=eps_loss, vlb_loss=loss_vlb if self.vlb else None)
 
     def variational_loss(self, x_t: torch.Tensor, x_0: torch.Tensor,
                         model_noise: torch.Tensor, v: torch.Tensor, t: torch.Tensor):
