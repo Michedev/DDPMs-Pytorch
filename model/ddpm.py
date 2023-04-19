@@ -98,27 +98,12 @@ class GaussianDDPM(pl.LightningModule):
         if use_vlb:
             loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
             loss = loss + loss_vlb
-        # If it's time to log the loss, log the total loss and optionally the noise and VLB losses
-        if (self.iteration % self.logging_freq) == 0:
-            self.log('loss/train_loss', loss, on_step=True, prog_bar=True)
-            if use_vlb:
-                self.log('loss/train_loss_noise', noise_loss, on_step=True)
-                self.log('loss/train_loss_vlb', loss_vlb, on_step=True)
-            # Log the norm of the gradients of the parameters
-            norm_params = sum([torch.norm(p.grad) for p in self.parameters() if hasattr(p, 'grad') and p.grad is not None])
-            self.log('grad_norm', norm_params)
-        # Increment the iteration count
+
         self.iteration += 1
-        # Return the loss as a dictionary
+
         return dict(loss=loss, noise_loss=noise_loss, vlb_loss=loss_vlb if use_vlb else None)
 
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int):
-        # Generate images and log them for visualization
-        if batch_idx == 0:
-            gen_images = self.generate(batch_size=16)  # Generate 16 images
-            gen_images = torchvision.utils.make_grid(gen_images)  # Convert to grid
-            self.logger.experiment.add_image('gen_val_images', gen_images, self.current_epoch)  # Log the images
-            torchvision.utils.save_image(gen_images, f'gen_images/epoch={self.current_epoch}.png')  # Save the images
 
         # Unpack the batch into inputs X and ground truth y
         X, y = batch
@@ -150,13 +135,8 @@ class GaussianDDPM(pl.LightningModule):
         # self.iteration > 0 is to avoid computing the VLB loss before the first training step because gives NaNs
         if self.iteration >= self.init_step_vlb and self.vlb:
             eps_loss = loss
-            self.log('loss/val_eps_loss', eps_loss, on_step=True)
             loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
-            self.log('loss/val_vlb_loss', loss_vlb, on_step=True)
             loss = loss + loss_vlb
-
-        # Log the total validation loss
-        self.log('loss/val_loss', loss, on_step=True)
 
         # Return the loss as a dictionary
         return dict(loss=loss, noise_loss=eps_loss, vlb_loss=loss_vlb if self.vlb else None)

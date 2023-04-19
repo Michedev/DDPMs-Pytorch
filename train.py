@@ -9,6 +9,7 @@ import omegaconf
 import os
 
 from callbacks.ema import EMA
+from callbacks.logger import LoggerCallback
 from utils.paths import MODEL
 
 
@@ -68,7 +69,8 @@ def train(config: DictConfig):
     # Create a ModelCheckpoint callback that saves the model weights to disk during training
     ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-valid_loss={loss/val_loss_epoch}', 
                                      monitor='loss/val_loss_epoch', auto_insert_metric_name=False, save_last=True)
-    callbacks = [ckpt_callback]
+    ddpm_logger = LoggerCallback(config.freq_logging, config.freq_logging_norm_grad, config.batch_size_gen_images) 
+    callbacks = [ckpt_callback, ddpm_logger]
 
     # Add additional callbacks if specified in the configuration file
     if config.ema:
