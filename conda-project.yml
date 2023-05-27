@@ -1,0 +1,34 @@
+name: DDPMs-Pytorch
+environments:
+  default:
+    - environment.yml
+  pytorch-cpu:
+    - env.pytorch-cpu.yml
+variables:
+  PYTHONPATH: ./
+  HYDRA_FULL_ERROR: '1'
+commands:
+  train:
+    cmd: python train.py accelerator=gpu devices=1
+    environment: default
+    variables:
+  train-class-conditioned:
+    cmd: python train.py model=unet_class_conditioned accelerator=gpu devices=1
+    environment: default
+    variables:
+  train-cpu:
+    cmd: python train.py accelerator=cpu devices=1
+    environment: default
+    variables:
+  test:
+    cmd: pytest tests
+    environment: default
+    variables:
+  generate:
+    cmd: python generate.py
+    environment: default
+    variables:
+  plot-cosine-scheduler:
+    cmd: python variance_scheduler/cosine.py
+    environment: default
+    variables:
