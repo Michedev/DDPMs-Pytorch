@@ -19,7 +19,7 @@ class LoggerCallback(Callback):
             if outputs['vlb_loss'] is not None:
                 pl_module.log("train/vlb_loss", outputs["vlb_loss"], on_step=True, on_epoch=False, prog_bar=True, logger=True)
 
-    def on_after_backward(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", loss: "torch.Tensor") -> None:
+    def on_after_backward(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         if trainer.global_step % self.freq_train_norm_gradients == 0:
             norm_grad = 0
             for p in pl_module.parameters():
