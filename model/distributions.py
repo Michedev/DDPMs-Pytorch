@@ -14,9 +14,13 @@ def mu_x_t(x_t: torch.Tensor, t: torch.Tensor, model_noise: torch.Tensor, alphas
     :param alphas: sequence of $\alpha$ used for variance scheduling
     :return: the mean of $q(x_t | x_0)$
     """
-    x = 1 / (torch.sqrt(alphas[t].reshape(-1, 1, 1, 1) + eps) + eps) * (x_t - (
-                betas[t].reshape(-1, 1, 1, 1) / (torch.sqrt(1 - alphas_hat[t].reshape(-1, 1, 1, 1) + eps) + eps) * model_noise))
+    alpha_t = alphas[t].reshape(-1, 1, 1, 1)
+    beta_t = betas[t].reshape(-1, 1, 1, 1)
+    alpha_hat_t = alphas_hat[t].reshape(-1, 1, 1, 1)
+    x = 1 / (torch.sqrt(alpha_t) + eps) * (x_t - (beta_t / (torch.sqrt(1 - alpha_hat_t) + eps) * model_noise))
     # tg.guard(x, "B, C, W, H")
+    return x
+
     return x
 
 
@@ -45,10 +49,14 @@ def mu_hat_xt_x0(x_t: torch.Tensor, x_0: torch.Tensor, t: torch.Tensor, alphas_h
     :param betas: sequence of $\beta$ used for variance scheduling [T}
     :return: the mean of distribution $q(x_{t-1} | x_t, x_0)$
     """
-    one_min_alpha_hat = (1 - alphas_hat[t].reshape(-1, 1, 1, 1)) + eps
-    x = torch.sqrt(alphas_hat[t - 1].reshape(-1, 1, 1, 1) + eps) * betas[t].reshape(-1, 1, 1, 1) / one_min_alpha_hat * x_0 + \
-        torch.sqrt(alphas[t].reshape(-1, 1, 1, 1) + eps) * (
-                    1 - alphas_hat[t - 1].reshape(-1, 1, 1, 1)) / one_min_alpha_hat * x_t
+    alpha_hat_t = alphas_hat[t].reshape(-1, 1, 1, 1)
+    one_min_alpha_hat = (1 - alpha_hat_t) + eps
+    alpha_t = alphas[t].reshape(-1, 1, 1, 1)
+    alpha_hat_t_1 = alphas_hat[t - 1].reshape(-1, 1, 1, 1)
+    beta_t = betas[t].reshape(-1, 1, 1, 1)
+    x = torch.sqrt(alpha_hat_t_1 + eps) * beta_t / one_min_alpha_hat * x_0 + \
+        torch.sqrt(alpha_t + eps) * (
+                    1 - alpha_hat_t_1) / one_min_alpha_hat * x_t
     # tg.guard(x, "B, C, W, H")
     return x
 

@@ -208,6 +208,7 @@ class GaussianDDPM(pl.LightningModule):
             steps = []
         X_noise = torch.randn(batch_size, self.input_channels,  # start with random noise sampled from N(0, 1)
                               self.width, self.height, device=self.device)
+        beta_sqrt = torch.sqrt(self.betas)
         for t in range(T - 1, -1, -1):
             if get_intermediate_steps:
                 steps.append(X_noise)
@@ -215,14 +216,14 @@ class GaussianDDPM(pl.LightningModule):
             eps, v = self.denoiser_module(X_noise, t)  # predict via nn the noise
             # if variational lower bound is present on the loss function hence v (the logit of variance) is trained
             # else the variance is taked fixed as in the original DDPM paper
-            sigma = sigma_x_t(v, t, self.betas_hat, self.betas) if self.vlb else self.betas_hat[t].reshape(-1, 1, 1, 1)
+            sigma = sigma_x_t(v, t, self.betas_hat, self.betas) if self.vlb else beta_sqrt[t].reshape(-1, 1, 1, 1)
             z = torch.randn_like(X_noise)
             if t == 0:
                 z.fill_(0)
             alpha_t = self.alphas[t].reshape(-1, 1, 1, 1)
+            alpha_hat_t = self.alphas_hat[t].reshape(-1, 1, 1, 1)
             X_noise = 1 / (torch.sqrt(alpha_t)) * \
-                      (X_noise - ((1 - alpha_t) / torch.sqrt(1 - self.alphas_hat[t].reshape(-1, 1, 1, 1))) * eps) + \
-                      sigma * z  # denoise step from x_t to x_{t-1} following the DDPM paper. Differently from the
+                      (X_noise - ((1 - alpha_t) / torch.sqrt(1 - alpha_hat_t)) * eps) + sigma * z  # denoise step from x_t to x_{t-1} following the DDPM paper. Differently from the
             # original paper, the variance is estimated via nn instead of be fixed, as in Improved DDPM paper
         X_noise = (X_noise + 1) / 2  # rescale from [-1, 1] to [0, 1]
         if get_intermediate_steps:

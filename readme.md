@@ -22,12 +22,12 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 # How to train
 
-1. Install [anaconda](https://www.anaconda.com/) or miniconda, but install anaconda-project `conda install anaconda-project`
+1. Install [anaconda](https://www.anaconda.com/) or miniconda, then install conda-project `conda install -c conda-forge conda-project`
 
 
 2. Train the model
 
-       anaconda-project run train 
+       conda project run train 
 
    By default, the version of trained DDPM is from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
    You can switch to the original DDPM by disabling the variational lower bound with the following command:
