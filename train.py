@@ -67,8 +67,8 @@ def train(config: DictConfig):
     val_dl = DataLoader(val_dataset, batch_size=config.batch_size, pin_memory=pin_memory)
 
     # Create a ModelCheckpoint callback that saves the model weights to disk during training
-    ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-valid_loss={loss/val_loss_epoch}', 
-                                     monitor='loss/val_loss_epoch', auto_insert_metric_name=False, save_last=True)
+    ckpt_callback = ModelCheckpoint('./', 'epoch={epoch}-valid_loss={val/loss_epoch}', 
+                                     monitor='val/loss_epoch', auto_insert_metric_name=False, save_last=True)
     ddpm_logger = LoggerCallback(config.freq_logging, config.freq_logging_norm_grad, config.batch_size_gen_images) 
     callbacks = [ckpt_callback, ddpm_logger]
 
@@ -77,7 +77,7 @@ def train(config: DictConfig):
         # Create an Expontential Moving Average callback
         callbacks.append(EMA(config.ema_decay))  
     if config.early_stop:
-        callbacks.append(EarlyStopping('loss/val_loss_epoch', min_delta=config.min_delta, patience=config.patience))
+        callbacks.append(EarlyStopping('val/loss_epoch', min_delta=config.min_delta, patience=config.patience))
 
     trainer = pl.Trainer(callbacks=callbacks, accelerator=config.accelerator, devices=config.devices,
                          gradient_clip_val=config.gradient_clip_val, gradient_clip_algorithm=config.gradient_clip_algorithm)
