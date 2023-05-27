@@ -19,7 +19,7 @@ class LoggerCallback(Callback):
             if outputs['vlb_loss'] is not None:
                 pl_module.log("train/vlb_loss", outputs["vlb_loss"], on_step=True, on_epoch=False, prog_bar=True, logger=True)
 
-    def on_before_backward(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", loss: "torch.Tensor") -> None:
+    def on_after_backward(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", loss: "torch.Tensor") -> None:
         if trainer.global_step % self.freq_train_norm_gradients == 0:
             norm_grad = 0
             for p in pl_module.parameters():
@@ -28,10 +28,10 @@ class LoggerCallback(Callback):
             pl_module.log("train/norm_grad", norm_grad, on_step=True, on_epoch=False, prog_bar=True, logger=True)
 
     def on_validation_batch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", outputs: dict, batch: Any, batch_idx: int) -> None:
-        pl_module.log("val/loss", outputs["loss"], on_step=True, on_epoch=False, prog_bar=True, logger=True)
-        pl_module.log("val/noise_loss", outputs["noise_loss"], on_step=True, on_epoch=False, prog_bar=True, logger=True)
+        pl_module.log("val/loss", outputs["loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        pl_module.log("val/noise_loss", outputs["noise_loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
         if outputs['vlb_loss'] is not None:
-            pl_module.log("val/vlb_loss", outputs["vlb_loss"], on_step=True, on_epoch=False, prog_bar=True, logger=True)
+            pl_module.log("val/vlb_loss", outputs["vlb_loss"], on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
     def on_validation_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         gen_images = pl_module.generate(batch_size=self.batch_size_gen_images) # Generate images
