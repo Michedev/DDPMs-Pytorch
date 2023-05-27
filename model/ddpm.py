@@ -129,12 +129,11 @@ class GaussianDDPM(pl.LightningModule):
         pred_eps, v = self(x_t, t)
 
         # Compute the reconstruction loss between the input and the predicted noise
-        loss = self.mse(eps, pred_eps)
+        loss = eps_loss = self.mse(eps, pred_eps)
 
         # If using the variational lower bound (VLB), compute the VLB loss and add it to the reconstruction loss
         # self.iteration > 0 is to avoid computing the VLB loss before the first training step because gives NaNs
         if self.iteration >= self.init_step_vlb and self.vlb:
-            eps_loss = loss
             loss_vlb = self.lambda_variational * self.variational_loss(x_t, X, pred_eps, v, t).mean(dim=0).sum()
             loss = loss + loss_vlb
 

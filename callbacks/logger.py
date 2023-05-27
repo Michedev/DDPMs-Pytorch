@@ -36,5 +36,5 @@ class LoggerCallback(Callback):
     def on_validation_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         gen_images = pl_module.generate(batch_size=self.batch_size_gen_images) # Generate images
         gen_images = torchvision.utils.make_grid(gen_images)  # Convert to grid
-        pl_module.logger.experiment.add_image('gen_val_images', gen_images, self.current_epoch)  # Log the images
-        torchvision.utils.save_image(gen_images, f'gen_images/epoch={self.current_epoch}.png')  # Save the images
+        pl_module.logger.experiment.add_image('gen_val_images', gen_images, trainer.current_epoch)  # Log the images
+        torchvision.utils.save_image(gen_images, f'gen_images/epoch={pl_module.current_epoch}.png')  # Save the images
