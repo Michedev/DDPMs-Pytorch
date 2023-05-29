@@ -1,4 +1,5 @@
 envs/
+<<<<<<< HEAD
 saved_models/
 .idea/
 .github/
@@ -6,6 +7,10 @@ saved_models/
 
 
 
+=======
+.idea
+saved_models/
+>>>>>>> bef2d25 (update gitignore)
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -166,3 +171,6 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+
+launch.json
