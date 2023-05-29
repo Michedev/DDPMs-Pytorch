@@ -79,8 +79,7 @@ def train(config: DictConfig):
     if config.early_stop:
         callbacks.append(EarlyStopping('val/loss_epoch', min_delta=config.min_delta, patience=config.patience))
 
-    trainer = pl.Trainer(callbacks=callbacks, accelerator=config.accelerator, devices=config.devices,
-                         gradient_clip_val=config.gradient_clip_val, gradient_clip_algorithm=config.gradient_clip_algorithm)
+    trainer = pl.Trainer(callbacks=callbacks, accelerator=config.accelerator, devices=config.devices, gradient_clip_val=config.gradient_clip_val, gradient_clip_algorithm=config.gradient_clip_algorithm)
     trainer.fit(model, train_dl, val_dl)
 
 if __name__ == '__main__':
