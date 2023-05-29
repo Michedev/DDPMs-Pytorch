@@ -14,13 +14,21 @@ on:
       - 'v*.*.*'
     branches:
       - master
-
+  schedule:
+    # weekly
+    - cron: '0 0 * * 1'
 
 permissions:
   contents: read
 
 jobs:
-  deploy:
+  # test on several python versions
+  test-build:
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8, 3.9, 3.10, 3.11]
+    name: Test and build python package version ${{ matrix.python-version }}
+
     runs-on: ubuntu-latest
 
     steps:
@@ -28,7 +36,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.9'
+        python-version: '${{ matrix.python-version }}'
     - name: Assemble python package
       run: |
            mv model/ ddpm/
