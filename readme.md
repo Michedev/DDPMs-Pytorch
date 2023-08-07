@@ -32,15 +32,15 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
    By default, the version of trained DDPM is from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
    You can switch to the original DDPM by disabling the variational lower bound with the following command:
       
-       anaconda-project run train model.vlb=False
+       conda-project run train model.vlb=False
    
    You can also train the DDPM with the Classifier-free Diffusion Guidance by changing the model:
 
-       anaconda-project run train model=unet_class_conditioned
+       conda-project run train model=unet_class_conditioned
     
     or via the shortcut
 
-       anaconda-project run train-class-conditioned
+       conda-project run train-class-conditioned
 
     Finally, under saved_models/{train-datetime} you can find the trained model, the tensorboard logs, the training config
 
@@ -50,7 +50,7 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 2. Generate a new batch of images
 
-       anaconda-project run generate -r RUN
+       conda-project run generate -r RUN
 
    The other options are: `[--seed SEED] [--device DEVICE] [--batch-size BATCH_SIZE] [-w W] [--scheduler {linear,cosine,tan}] [-T T]`
 
@@ -85,8 +85,8 @@ and "_Denoising Diffusion Probabilistic Models_". Down below the explaination of
 # Project structure
 
       .
-      ├── anaconda-project-lock.yml  # lock file for anaconda-project
-      ├── anaconda-project.yml  # project specs
+      ├── conda-project-lock.yml  # lock file for conda-project
+      ├── conda-project.yml  # project specs
       ├── callbacks  # Pytorch Lightning callbacks for training
       │   ├── ema.py  # exponential moving average callback
       ├── config  # config files for training for hydra
@@ -143,14 +143,14 @@ structure of mnist.yaml
 
 ### Disable the variational lower bound, use Linear scheduler, use 1000 noise steps, train in GPU
 
-    anaconda-project run train scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
+    conda-project run train scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
 
 
 ## Classifier-free Guidance
 
 Use the labels for __Diffusion Guidance__, as in "_Classifier-free Diffusion Guidance_" with the following command
 
-    anaconda-project run train model=unet_class_conditioned noise_steps=1000
+    conda-project run train model=unet_class_conditioned noise_steps=1000
 
 ## Add your scheduler
 
@@ -164,7 +164,7 @@ Use the labels for __Diffusion Guidance__, as in "_Classifier-free Diffusion Gui
 
 Finally train with the following command
 
-    anaconda-project run train scheduler=my-scheduler
+    conda-project run train scheduler=my-scheduler
 
 ## Add your dataset
 
@@ -186,21 +186,21 @@ val:
 
 Finally train with the following command
 
-    anaconda-project run train dataset=my-dataset
+    Conda-project run train dataset=my-dataset
     
-### Anaconda-project
+### Conda-project
 #### mac-os lock file
 
-1. Remove cudatoolkit from _anaconda-project.yml_ file at the bottom of the file, 
+1. Remove cudatoolkit from _conda-project.yml_ file at the bottom of the file, 
 under `env_specs -> default -> packages`
 2. De-comment `- osx-64`  under `env_specs -> default -> platforms`
-3. Delete _anaconda-project-lock.yml_ file
-4. Run `anaconda-project prepare` to generate the new lock file
+3. Delete _conda-project-lock.yml_ file
+4. Run `conda-project prepare` to generate the new lock file
 
 ## CPU-only environment
 
 To have an alternative a PyTorch CPU-only environment, 
-de-comment the following lines at the bottom of _anaconda-project.yml_
+de-comment the following lines at the bottom of _conda-project.yml_
 under `env_specs`
 
     #  pytorch-cpu:
