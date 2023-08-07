@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ddpm"
 description = "Pytorch implementation of 'Improved Denoising Diffusion Probabilistic Models', 'Denoising Diffusion Probabilistic Models' and 'Classifier-free Diffusion Guidance'"
-requires-python = ">=3.7,<=3.11"
+requires-python = ">=3.7,<3.12"
 keywords = ["pytorch", "ddpm", "denoising diffusion probabilistic model", "generative", ]
 license = {text = "MIT"}
 readme = "readme_pip.md"
