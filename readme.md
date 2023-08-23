@@ -12,35 +12,47 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 # How to use
 
+There are two ways to use this repository:
+
 1.  Install pip package containing the pytorch lightning model, which includes also the training step
 
         pip install ddpm
 
-2. Clone the repository
+2. Clone the repository to have the full control of the training
 
-        git clone git@github.com:Michedev/VAE_anomaly_detection.git
+        git clone https://github.com/Michedev/DDPMs-Pytorch
 
 # How to train
 
-1. Install [anaconda](https://www.anaconda.com/) or miniconda, then install conda-project `conda install -c conda-forge conda-project`
+1. Install the project environment via hatch (`pip install hatch`). There are two environments: _default_ has torch with cuda support, _cpu_ without it.
+
+       hatch env create
+or
+       hatch env create cpu
 
 
 2. Train the model
 
-       conda project run train 
+       hatch run train 
+
+   or for the cpu environment
+       
+       hatch run cpu:train
+
+   Note that this is valid for any `hatch run [env:]{command}` command 
 
    By default, the version of trained DDPM is from "Improved Denoising Diffusion Probabilistic Models" paper on MNIST dataset.
    You can switch to the original DDPM by disabling the variational lower bound with the following command:
       
-       conda-project run train model.vlb=False
+       hatch run train model.vlb=False
    
    You can also train the DDPM with the Classifier-free Diffusion Guidance by changing the model:
 
-       conda-project run train model=unet_class_conditioned
+       hatch run train model=unet_class_conditioned
     
     or via the shortcut
 
-       conda-project run train-class-conditioned
+       hatch run train-class-conditioned
 
     Finally, under saved_models/{train-datetime} you can find the trained model, the tensorboard logs, the training config
 
@@ -50,7 +62,7 @@ Pytorch implementation of "_Improved Denoising Diffusion Probabilistic Models_",
 
 2. Generate a new batch of images
 
-       conda-project run generate -r RUN
+       hatch run generate -r RUN
 
    The other options are: `[--seed SEED] [--device DEVICE] [--batch-size BATCH_SIZE] [-w W] [--scheduler {linear,cosine,tan}] [-T T]`
 
@@ -85,8 +97,6 @@ and "_Denoising Diffusion Probabilistic Models_". Down below the explaination of
 # Project structure
 
       .
-      ├── conda-project-lock.yml  # lock file for conda-project
-      ├── conda-project.yml  # project specs
       ├── callbacks  # Pytorch Lightning callbacks for training
       │   ├── ema.py  # exponential moving average callback
       ├── config  # config files for training for hydra
@@ -103,7 +113,7 @@ and "_Denoising Diffusion Probabilistic Models_". Down below the explaination of
       │   ├── distributions.py  # distributions functions for diffusion
       │   ├── unet_class.py  # UNet model for Classifier-free Diffusion Guidance
       │   └── unet.py  # UNet model for Denoising Diffusion Probabilistic Models
-      ├── pyproject.toml  # setuptool file to publish model/ to pypi
+      ├── pyproject.toml  # setuptool file to publish model/ to pypi and to manage the envs
       ├── readme.md   # this file
       ├── readme_pip.md  # readme for pypi
       ├── train.py  # script for training
@@ -143,14 +153,14 @@ structure of mnist.yaml
 
 ### Disable the variational lower bound, use Linear scheduler, use 1000 noise steps, train in GPU
 
-    conda-project run train scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
+    hatch run train scheduler=linear accelerator='gpu' model.vlb=False noise_steps=1000
 
 
 ## Classifier-free Guidance
 
 Use the labels for __Diffusion Guidance__, as in "_Classifier-free Diffusion Guidance_" with the following command
 
-    conda-project run train model=unet_class_conditioned noise_steps=1000
+    hatch run train model=unet_class_conditioned noise_steps=1000
 
 ## Add your scheduler
 
@@ -164,7 +174,7 @@ Use the labels for __Diffusion Guidance__, as in "_Classifier-free Diffusion Gui
 
 Finally train with the following command
 
-    conda-project run train scheduler=my-scheduler
+    hatch run train scheduler=my-scheduler
 
 ## Add your dataset
 
@@ -186,29 +196,5 @@ val:
 
 Finally train with the following command
 
-    Conda-project run train dataset=my-dataset
+    hatch run train dataset=my-dataset
     
-### Conda-project
-#### mac-os lock file
-
-1. Remove cudatoolkit from _conda-project.yml_ file at the bottom of the file, 
-under `env_specs -> default -> packages`
-2. De-comment `- osx-64`  under `env_specs -> default -> platforms`
-3. Delete _conda-project-lock.yml_ file
-4. Run `conda-project prepare` to generate the new lock file
-
-## CPU-only environment
-
-To have an alternative a PyTorch CPU-only environment, 
-de-comment the following lines at the bottom of _conda-project.yml_
-under `env_specs`
-
-    #  pytorch-cpu:
-    #    packages:
-    #    - cpuonly
-    #    channels:
-    #    - pytorch
-    #    platforms:
-    #    - linux-64
-    #    - win-64
-

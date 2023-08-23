@@ -1,8 +1,8 @@
 # Note: This pyproject.toml file is intended to publish model/ folder as pip package
 #       and is not intended to be used for the whole project. For the project, use anaconda-project.yml
 [build-system]
-requires = ["setuptools", "setuptools-scm[toml]"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "ddpm"
@@ -44,5 +44,62 @@ dev = [
     "pytest",
 ]
 
-[tool.setuptools.packages.find]
-where = ["ddpm"]
+[tool.hatch.build]
+include = [
+  "ddpm",
+]
+
+[tool.hatch.envs.default]
+python = "3.10"
+dependencies = [
+  "torch==2.0.1",
+  "torchvision",
+  "pytorch-lightning",
+  "torchmetrics",
+  "torchsummary",
+  "path",
+  "numpy",
+  "hydra-core",
+  "tensorboard",
+  "seaborn",
+  "matplotlib",
+  "einops",
+  "pytest",
+]
+
+[tool.hatch.envs.default.scripts]
+train = "python train.py accelerator=gpu devices=1 {args:train-gpu}"
+test = "pytest {args:tests}"
+compress-runs = "tar cfz saved_models.tar.gz saved_models/"
+run-tensorboard = "tensorboard --logdir=saved_models/"
+clean-empty-runs = """python -c '\nfrom path import Path\nfor run in Path(\"saved_models\").dirs():\n\
+         if not run.joinpath(\"best.ckpt\").exists():\n        print(f\"Removing\
+       {run}\")\n        run.rmtree()'\n"""
+generate = "python generate.py {args:generate}"
+plot-cosine-scheduler = "python plot_cosine_scheduler.py {args:plot-cosine-scheduler}"
+
+
+[tool.hatch.envs.cpu]
+python = "3.10"
+dependencies = [
+  "torch==2.0.1",
+  "torchvision",
+  "pytorch-lightning",
+  "path",
+  "numpy",
+  "hydra-core",
+  "tensorboard",
+  "seaborn",
+  "matplotlib",
+  "einops",
+  "pytest",
+]
+
+[tool.hatch.envs.cpu.env-vars]
+PIP_EXTRA_INDEX_URL = "https://download.pytorch.org/whl/cpu"
+PIP_VERBOSE = "1"
+
+
+[tool.hatch.envs.cpu.scripts]
+train = "python train.py accelerator=cpu devices=1 {args:train-cpu}"
+
