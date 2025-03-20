@@ -58,7 +58,7 @@ dependencies = [
   "torchmetrics",
   "torchsummary",
   "path",
-  "numpy",
+  "numpy<2.0.0",
   "hydra-core",
   "tensorboard",
   "seaborn",
@@ -68,7 +68,7 @@ dependencies = [
 ]
 
 [tool.hatch.envs.default.scripts]
-train = "python train.py accelerator=gpu devices=1 {args:train-gpu}"
+train = "python train.py accelerator=gpu devices=1"
 test = "pytest {args:tests}"
 compress-runs = "tar cfz saved_models.tar.gz saved_models/"
 run-tensorboard = "tensorboard --logdir=saved_models/"
