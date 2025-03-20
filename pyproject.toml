@@ -55,9 +55,9 @@ dependencies = [
   "torch==2.0.1",
   "torchvision",
   "pytorch-lightning",
-  "torchmetrics",
+  "torchmetrics==1.6.3",
   "torchsummary",
-  "path",
+  "path==17.1.0",
   "numpy<2.0.0",
   "hydra-core",
   "tensorboard",
@@ -85,8 +85,9 @@ dependencies = [
   "torch==2.0.1",
   "torchvision",
   "pytorch-lightning",
-  "path",
-  "numpy",
+  "torchmetrics==1.6.3",
+  "path==17.1.0",
+  "numpy<2.0.0",
   "hydra-core",
   "tensorboard",
   "seaborn",
@@ -101,5 +102,5 @@ PIP_VERBOSE = "1"
 
 
 [tool.hatch.envs.cpu.scripts]
-train = "python train.py accelerator=cpu devices=1 {args:train-cpu}"
+train = "python train.py accelerator=cpu"
 
