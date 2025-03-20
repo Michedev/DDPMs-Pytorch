@@ -38,7 +38,7 @@ def main():
     args = parse_args()
 
     print(args)
-    run_path = args.run.abspath()
+    run_path = args.run.absolute()
     pl.seed_everything(args.seed)
     assert run_path.exists(), run_path
     assert run_path.basename().endswith('.ckpt'), run_path
