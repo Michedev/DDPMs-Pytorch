@@ -8,8 +8,8 @@ defaults:
 
 batch_size: 128
 noise_steps: 4_000  # T
-accelerator: null  # from pytorch-lightning, the hardware platform used to train the neural network
-devices: null  # the devices to use in a given hardware platform (see argument above)
+accelerator: gpu  # from pytorch-lightning, the hardware platform used to train the neural network
+devices: 1  # the devices to use in a given hardware platform (see argument above)
 gradient_clip_val: 0.0  # gradient clip value - set to 0.0 to disable
 gradient_clip_algorithm: norm  # gradient clip algorithm - either 'norm' or 'value'
 ema: true  # exponential moving average

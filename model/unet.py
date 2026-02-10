@@ -139,7 +139,7 @@ class ImageSelfAttention(nn.Module):
 class UNetTimeStep(nn.Module):
 
     def __init__(self, channels: List[int], kernel_sizes: List[int], strides: List[int], paddings: List[int],
-                 downsample: bool, p_dropouts: List[float], time_embed_size: int):
+                 downsample: bool, p_dropouts: List[float], time_embed_size: int, double_output: bool = False):
         super().__init__()
         assert len(channels) == (len(kernel_sizes) + 1) == (len(strides) + 1) == (len(paddings) + 1) == \
                (len(p_dropouts) + 1), f'{len(channels)} == {(len(kernel_sizes) + 1)} == ' \
@@ -154,7 +154,9 @@ class UNetTimeStep(nn.Module):
         self.use_downsample = downsample
         self.downsample_op = nn.MaxPool2d(kernel_size=2)
         self.middle_block = ResBlockTimeEmbed(channels[-1], channels[-1], kernel_sizes[-1], strides[-1], paddings[-1], time_embed_size, p_dropouts[-1])
-        channels[0] *= 2 # because the output is the image plus the estimated variance coefficients
+        
+        if double_output: channels[0] *= 2 # because the output is the image plus the estimated variance coefficients
+        self.double_output = double_output
         self.upsample_blocks = nn.ModuleList([
             ResBlockTimeEmbed((2 if i != 0 else 1) * channels[-i - 1], channels[-i - 2], kernel_sizes[-i - 1],
                               strides[-i - 1],
@@ -201,9 +203,11 @@ class UNetTimeStep(nn.Module):
             h = upsample_block(h, time_embedding)
             if self.use_downsample and (i != (len(self.upsample_blocks) - 1)):
                 h = F.interpolate(h, size=hs[-i - 1].shape[-2:], mode='nearest')
-        x_recon, v = h[:, :x_channels], h[:, x_channels:]
-        # tg.guard(x_recon, "B, C, W, H")
-        # tg.guard(v, "B, C, W, H")
-        return x_recon, v
-
+        if self.double_output:
+            x_recon, v = h[:, :x_channels], h[:, x_channels:]
+            # tg.guard(x_recon, "B, C, W, H")
+            # tg.guard(v, "B, C, W, H")
+            return x_recon, v
+        else: 
+            return h
 
